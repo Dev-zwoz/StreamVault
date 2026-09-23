@@ -94,6 +94,7 @@ export function initReveals() {
 }
 
 function countUp(section) {
+  section.querySelectorAll('.stat').forEach((el) => el.classList.add('in'));
   section.querySelectorAll('[data-count]').forEach((el) => {
     const target = Number(el.dataset.count);
     const suffix = el.dataset.suffix || '';

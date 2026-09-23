@@ -379,3 +379,118 @@
 .force-reduced-motion .auth-card::before,
 .force-reduced-motion #load-more::after,
 .force-reduced-motion #status-badge .dot { animation: none !important; }
+
+/* ============================================================================
+   ROUND 5 — standalone player, richer avatars, extra life everywhere
+   (transform / opacity only, all killed by prefers-reduced-motion)
+   ============================================================================ */
+
+@keyframes watchDrift {
+  from { transform: translate3d(-2%, -1%, 0) scale(1.02); opacity: .38; }
+  to   { transform: translate3d(2%, 2%, 0) scale(1.1);   opacity: .58; }
+}
+@keyframes accountGlow {
+  from { transform: translate3d(0, 0, 0) scale(1); opacity: .55; }
+  to   { transform: translate3d(-24px, 26px, 0) scale(1.14); opacity: .95; }
+}
+@keyframes avatarFloat {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-5px); }
+}
+@keyframes ringSpinFast { to { transform: rotate(360deg); } }
+@keyframes ctaPulse {
+  0%   { box-shadow: 0 0 0 0 rgba(245,197,24,.42); }
+  70%  { box-shadow: 0 0 0 14px rgba(245,197,24,0); }
+  100% { box-shadow: 0 0 0 0 rgba(245,197,24,0); }
+}
+@keyframes chipSheen {
+  from { transform: translateX(-140%) skewX(-16deg); }
+  to   { transform: translateX(240%) skewX(-16deg); }
+}
+@keyframes iconBounce {
+  0%, 100% { transform: translateY(0) scale(1); }
+  40%      { transform: translateY(-5px) scale(1.1); }
+  70%      { transform: translateY(0) scale(.98); }
+}
+@keyframes statPop {
+  0%   { transform: scale(.86); }
+  60%  { transform: scale(1.08); }
+  100% { transform: scale(1); }
+}
+@keyframes underlineSlide {
+  from { transform: scaleX(0); }
+  to   { transform: scaleX(1); }
+}
+
+/* avatars get a touch more life on hover */
+.user-avatar:hover .ua-ring { animation-duration: 3.5s; border-color: var(--gold); }
+.user-avatar:hover > span { transform: scale(1.06); }
+.user-avatar > span { transition: transform var(--dur) var(--ease); }
+
+/* gold CTA breathes */
+.btn-gold { position: relative; }
+.btn-gold::after {
+  content: ''; position: absolute; inset: -2px; border-radius: inherit;
+  animation: ctaPulse 3.4s var(--ease) infinite; pointer-events: none;
+}
+
+/* chips + tiles get a sheen sweep on hover */
+.watch-chip, .ps-chip, #lib-tabs button { position: relative; overflow: hidden; }
+.watch-chip::after, .ps-chip::after, #lib-tabs button::after {
+  content: ''; position: absolute; top: 0; bottom: 0; width: 45%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.28), transparent);
+  transform: translateX(-140%) skewX(-16deg); pointer-events: none;
+}
+.watch-chip:hover::after, .ps-chip:hover::after, #lib-tabs button:hover::after { animation: chipSheen .75s var(--ease); }
+
+/* genre tiles + feature cards: icon bounce + lift */
+.genre-tile:hover svg { animation: iconBounce .6s var(--ease); }
+.genre-tile:hover { transform: translateY(-6px); }
+.feature-card:hover .fc-icon { animation: iconBounce .7s var(--ease); }
+
+/* active library tab underline slides in */
+#lib-tabs button.active::before { animation: underlineSlide .32s var(--ease); transform-origin: left center; }
+
+/* stat cards pop when they scroll into view */
+.stat.in .astat, .astat.in { animation: statPop .55s var(--ease); }
+.astat:hover { transform: translateY(-4px); border-color: rgba(245,197,24,.4); }
+
+/* standalone player chrome */
+.watch-frame { animation: modalIn .5s var(--ease) both; }
+.watch-bar { animation: fadeDown .5s var(--ease) both; }
+.watch-foot { animation: fadeUp .6s var(--ease) both; }
+@keyframes fadeDown { from { opacity: 0; transform: translateY(-14px); } to { opacity: 1; transform: none; } }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+.watch-chip.active { position: relative; overflow: hidden; }
+.watch-chip.active::after {
+  content: ''; position: absolute; top: 0; bottom: 0; width: 40%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.5), transparent);
+  animation: chipSheen 2.6s var(--ease) infinite; pointer-events: none;
+}
+.player-standalone { animation: fadeUp .4s var(--ease) both; }
+
+/* account hero decorations */
+.account-stats .astat { transition: transform var(--dur) var(--ease), border-color var(--dur-fast), box-shadow var(--dur); }
+.account-hero:hover::after { animation-duration: 6s; }
+
+/* language menu: coverage chips */
+.lang-item .li-cov {
+  margin-left: auto; font-size: .64rem; font-weight: 700; letter-spacing: .02em;
+  padding: 2px 6px; border-radius: 999px; color: var(--muted);
+  background: rgba(255,255,255,.06); border: 1px solid #2a2a38;
+}
+.lang-item .li-cov.full { color: #0B0B0F; background: linear-gradient(135deg, var(--gold), var(--gold-deep)); border-color: transparent; }
+
+@media (prefers-reduced-motion: reduce) {
+  .watch-aurora, .account-hero::after, .account-avatar, .btn-gold::after,
+  .watch-chip::after, .ps-chip::after, #lib-tabs button::after, .watch-frame,
+  .watch-bar, .watch-foot, .player-standalone { animation: none !important; }
+}
+html.force-reduced-motion .watch-aurora,
+html.force-reduced-motion .account-hero::after,
+html.force-reduced-motion .account-avatar,
+html.force-reduced-motion .btn-gold::after,
+html.force-reduced-motion .watch-chip::after,
+html.force-reduced-motion .watch-frame,
+html.force-reduced-motion .watch-bar,
+html.force-reduced-motion .watch-foot { animation: none !important; }

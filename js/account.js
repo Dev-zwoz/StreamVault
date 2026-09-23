@@ -7,7 +7,7 @@
    the storage keys are already namespaced for migration.
    ============================================================================ */
 
-import { t, LANGS } from './i18n.js';
+import { t, LANGS, langCoverage } from './i18n.js';
 import { toast } from './ui.js';
 
 const ACC_KEY = 'sv:accounts';
@@ -118,7 +118,10 @@ export function applyAccent() {
 // ---------------------------------------------------------------------------
 // Auth
 // ---------------------------------------------------------------------------
-const AVATAR_HUES = [46, 262, 217, 340, 152, 20];
+// Every profile badge uses the brand gold → violet gradient now (the old
+// per-name hue made some avatars look yellow-green). Kept for data-shape
+// compatibility with accounts already stored in localStorage.
+const AVATAR_HUES = [46, 46, 46, 46, 46, 46];
 
 function avatarFor(name) {
   const n = (name || 'v').trim() || 'v';
@@ -246,7 +249,7 @@ export function clearHistory() {
   acc.history = [];
   saveAccount(acc);
   renderAccountView();
-  toast(t('admin.sent'));
+  toast(t('toast.historyCleared'));
 }
 
 export function getHistory() {
@@ -529,7 +532,10 @@ export function openSettings() {
       <div class="setting-row">
         <div><b>🌐 ${t('settings.language')}</b><small>${t('settings.languageDesc')}</small></div>
         <select class="set-select" data-set="language">
-          ${LANGS.map((l) => `<option value="${l.code}" ${document.documentElement.lang === l.code ? 'selected' : ''}>${l.flag} ${l.native}</option>`).join('')}
+          ${LANGS.map((l) => {
+            const cov = langCoverage(l.code);
+            return `<option value="${l.code}" ${document.documentElement.lang === l.code ? 'selected' : ''}>${l.flag} ${l.native}${cov < 100 ? ` · ${cov}%` : ''}</option>`;
+          }).join('')}
         </select>
       </div>
 

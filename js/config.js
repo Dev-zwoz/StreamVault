@@ -97,6 +97,7 @@ export const SORTS = {
 /** Spoken languages offered in the library filter (TMDB with_original_language) */
 export const LIB_LANGS = [
   'en', 'ko', 'ja', 'id', 'es', 'fr', 'de', 'hi', 'zh', 'pt', 'ru', 'tr', 'it', 'th', 'ar',
+  'vi', 'nl', 'pl', 'uk', 'sv', 'da', 'fi', 'no', 'cs', 'el', 'he', 'fa', 'ms', 'ta', 'te',
 ];
 
 /** Creator / social links */

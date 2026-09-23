@@ -1001,9 +1001,7 @@ footer {
   font-family: var(--font-head); font-weight: 800; font-size: 1rem; color: #0B0B0F;
   background:
     radial-gradient(circle at 32% 26%, rgba(255,255,255,.6), transparent 46%),
-    conic-gradient(from 200deg,
-      hsl(var(--hue, 46) 88% 62%), hsl(calc(var(--hue, 46) + 40) 82% 48%),
-      hsl(calc(var(--hue, 46) + 80) 78% 58%), hsl(var(--hue, 46) 88% 62%));
+    conic-gradient(from 210deg, var(--gold) 0deg, var(--gold-deep) 120deg, #8B5CF6 240deg, var(--gold) 360deg);
   border: 2px solid rgba(245,197,24,.55);
   box-shadow: 0 6px 20px rgba(0,0,0,.5);
   transition: transform var(--dur-fast) var(--ease), box-shadow var(--dur) var(--ease), border-color var(--dur-fast);
@@ -1014,8 +1012,14 @@ footer {
 .user-avatar.lg { width: 54px; height: 54px; min-width: 54px; min-height: 54px; font-size: 1.3rem; }
 .ua-ring {
   position: absolute; inset: -5px; border-radius: 50%; z-index: 1; pointer-events: none;
-  border: 1.5px dashed rgba(245,197,24,.55);
-  animation: ringSpin 14s linear infinite;
+  border: 1.5px solid rgba(245,197,24,.42);
+  box-shadow: 0 0 16px rgba(245,197,24,.22), 0 0 0 1px rgba(255,255,255,.04) inset;
+  transition: border-color var(--dur-fast), box-shadow var(--dur-fast);
+}
+.user-avatar:hover .ua-ring {
+  border-color: var(--gold);
+  box-shadow: 0 0 22px rgba(245,197,24,.45);
+  animation: ringSpinFast 7s linear infinite;
 }
 .ua-crown {
   position: absolute; top: -7px; right: -7px; z-index: 3;
@@ -1124,17 +1128,30 @@ footer {
 /* ---------------------------------------------------------------- account page */
 .account-wrap { padding-top: calc(var(--nav-h) + 40px); }
 .account-hero {
+  position: relative; overflow: hidden;
   display: grid; grid-template-columns: auto 1fr auto; gap: 26px; align-items: center;
-  padding: 30px; border-radius: var(--radius-lg); border: 1px solid #24242f;
-  background: linear-gradient(135deg, rgba(245,197,24,.06), rgba(109,40,217,.07) 45%, transparent 80%), var(--surface);
+  padding: 34px; border-radius: var(--radius-lg); border: 1px solid #24242f;
+  background: linear-gradient(135deg, rgba(245,197,24,.08), rgba(109,40,217,.10) 45%, transparent 82%), var(--surface);
   box-shadow: 0 30px 80px rgba(0,0,0,.4);
 }
+.account-hero::before {
+  content: ''; position: absolute; inset: 0 0 auto 0; height: 4px;
+  background: linear-gradient(90deg, var(--gold), var(--gold-deep) 35%, #7C3AED 70%, #2563EB);
+  opacity: .9;
+}
+.account-hero::after {
+  content: ''; position: absolute; top: -140px; right: -80px; width: 340px; height: 340px;
+  border-radius: 50%; pointer-events: none;
+  background: radial-gradient(circle, rgba(245,197,24,.16), transparent 68%);
+  animation: accountGlow 12s ease-in-out infinite alternate;
+}
+.account-avatar { animation: avatarFloat 7s ease-in-out infinite; }
 .account-avatar {
   position: relative; width: 92px; height: 92px; border-radius: 50%;
   display: grid; place-items: center; font-family: var(--font-head); font-weight: 800; font-size: 2.1rem; color: #0B0B0F;
   background:
-    radial-gradient(circle at 32% 26%, rgba(255,255,255,.6), transparent 46%),
-    conic-gradient(from 200deg, hsl(var(--hue,46) 88% 62%), hsl(calc(var(--hue,46) + 45) 82% 48%), hsl(var(--hue,46) 88% 62%));
+    radial-gradient(circle at 32% 26%, rgba(255,255,255,.62), transparent 46%),
+    conic-gradient(from 210deg, var(--gold) 0deg, var(--gold-deep) 110deg, #7C3AED 235deg, var(--gold) 360deg);
   border: 3px solid rgba(245,197,24,.5);
   box-shadow: 0 14px 40px rgba(0,0,0,.5);
 }
@@ -1342,4 +1359,105 @@ footer {
   .lib-tabs { width: 100%; overflow-x: auto; }
   .player-sources { padding: 8px 10px; }
   .ps-credit { display: none; }
+}
+
+/* ============================================================================
+   ROUND 5 — standalone player page (watch.html), framed-player notice
+   ============================================================================ */
+
+.player-standalone {
+  position: absolute; top: 14px; right: 14px; z-index: 4;
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 8px 14px; border-radius: 999px; font-size: .78rem; font-weight: 600;
+  color: var(--text); text-decoration: none;
+  background: rgba(21,21,28,.82); border: 1px solid #2a2a38;
+  backdrop-filter: blur(12px);
+  transition: transform var(--dur-fast) var(--ease), border-color var(--dur-fast), background var(--dur-fast);
+}
+.player-standalone:hover { transform: translateY(-2px); border-color: var(--gold); background: rgba(28,28,37,.95); }
+.player-standalone b { font-weight: 600; }
+.player-standalone svg { width: 15px; height: 15px; }
+
+.player-framed-note {
+  position: absolute; top: 0; left: 0; right: 0; z-index: 5;
+  display: flex; align-items: center; justify-content: center; gap: 16px; flex-wrap: wrap;
+  padding: 14px 18px; text-align: center;
+  background: linear-gradient(180deg, rgba(11,11,15,.96), rgba(11,11,15,.55) 70%, transparent);
+  border-bottom: 1px solid rgba(245,197,24,.28);
+}
+.player-framed-note p { margin: 0; max-width: 62ch; font-size: .82rem; color: var(--text); opacity: .9; }
+
+/* ------------------------------------------------------------------ watch.html */
+.watch-page {
+  min-height: 100vh; display: flex; flex-direction: column;
+  background: var(--bg); color: var(--text); overflow-x: hidden;
+}
+.watch-aurora {
+  position: fixed; inset: -20% -10%; z-index: 0; pointer-events: none; opacity: .5;
+  background:
+    radial-gradient(46% 38% at 18% 12%, rgba(245,197,24,.16), transparent 62%),
+    radial-gradient(42% 40% at 82% 22%, rgba(109,40,217,.22), transparent 64%),
+    radial-gradient(48% 44% at 60% 96%, rgba(37,99,235,.18), transparent 66%);
+  animation: watchDrift 26s ease-in-out infinite alternate;
+}
+.watch-bar, .watch-stage, .watch-foot { position: relative; z-index: 1; }
+.watch-bar {
+  display: flex; align-items: center; gap: 18px; flex-wrap: wrap;
+  padding: 16px clamp(14px, 3vw, 30px);
+  border-bottom: 1px solid #1e1e28;
+  background: rgba(11,11,15,.72); backdrop-filter: blur(14px);
+}
+.watch-back {
+  font-size: .82rem; font-weight: 600; color: var(--muted); text-decoration: none;
+  padding: 8px 14px; border-radius: 999px; border: 1px solid #24242f;
+  transition: color var(--dur-fast), border-color var(--dur-fast), transform var(--dur-fast) var(--ease);
+}
+.watch-back:hover { color: var(--text); border-color: var(--gold); transform: translateX(-3px); }
+.watch-head { display: flex; flex-direction: column; min-width: 0; flex: 1 1 220px; }
+.watch-title {
+  font-family: var(--font-head); font-size: clamp(1rem, 2.4vw, 1.4rem);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.watch-sub { font-size: .76rem; }
+.watch-tools { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.watch-sources { display: flex; gap: 8px; flex-wrap: wrap; }
+.watch-chip {
+  padding: 8px 14px; border-radius: 999px; font-size: .76rem; font-weight: 600; cursor: pointer;
+  background: var(--surface); border: 1px solid #2a2a38; color: var(--muted);
+  transition: color var(--dur-fast), border-color var(--dur-fast), transform var(--dur-fast) var(--ease), background var(--dur-fast);
+}
+.watch-chip:hover { color: var(--text); transform: translateY(-2px); }
+.watch-chip.active {
+  color: #0B0B0F; border-color: transparent;
+  background: linear-gradient(135deg, var(--gold), var(--gold-deep));
+  box-shadow: 0 8px 24px rgba(245,197,24,.28);
+}
+.watch-stage { flex: 1; display: flex; flex-direction: column; gap: 12px; padding: clamp(14px, 2.4vw, 26px); }
+.watch-frame {
+  position: relative; width: 100%; max-width: 1680px; margin: 0 auto; aspect-ratio: 16 / 9;
+  background: #000; border-radius: var(--radius-lg); overflow: hidden;
+  border: 1px solid #23232e; box-shadow: 0 40px 120px rgba(0,0,0,.75), 0 0 0 1px rgba(245,197,24,.08) inset;
+}
+.watch-frame iframe, .watch-frame video { width: 100%; height: 100%; border: 0; display: block; background: #000; }
+.watch-boot { height: 100%; display: grid; place-items: center; gap: 16px; text-align: center; color: var(--muted); }
+.watch-boot-ring {
+  width: 56px; height: 56px; border-radius: 50%;
+  border: 3px solid rgba(245,197,24,.22); border-top-color: var(--gold);
+  animation: ringSpin 1s linear infinite;
+}
+.watch-empty { display: grid; place-items: center; height: 100%; color: var(--muted); }
+.watch-note { text-align: center; font-size: .76rem; }
+.watch-foot {
+  padding: 14px; text-align: center; font-size: .76rem; color: var(--muted);
+  border-top: 1px solid #1a1a24;
+}
+.watch-foot a { color: var(--gold); text-decoration: none; }
+.watch-foot a:hover { text-decoration: underline; }
+
+@media (max-width: 720px) {
+  .watch-bar { gap: 10px; }
+  .watch-head { order: 3; flex-basis: 100%; }
+  .player-standalone b { display: none; }
+  .player-framed-note { padding: 10px 12px; gap: 10px; }
+  .player-framed-note p { font-size: .76rem; }
 }

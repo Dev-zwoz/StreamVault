@@ -162,9 +162,26 @@ function renderControls() {
   }
 }
 
+/**
+ * watch.html link for whatever is loaded right now. The standalone page is a
+ * top-level document, so browsers let the VidRift embed play there even when
+ * StreamVault itself is nested inside a preview panel or in-app browser.
+ */
+function standaloneUrl() {
+  const q = new URLSearchParams({ type: cur.type === 'tv' ? 'tv' : 'movie', id: String(cur.media.id) });
+  if (cur.title) q.set('title', cur.title);
+  if (cur.type === 'tv') { q.set('s', String(cur.season || 1)); q.set('e', String(cur.episode || 1)); }
+  if (cur.media.poster_path) q.set('poster', IMG.posterSm + cur.media.poster_path);
+  return `watch.html?${q}`;
+}
+
+const framed = () => { try { return window.self !== window.top; } catch { return true; } };
+
 /** Load a source into the frame */
 function loadSource(i) {
   const s = cur.sources[i];
+  const sa = document.getElementById('player-standalone');
+  if (sa) sa.href = standaloneUrl();
   const keys = document.getElementById('player-keys');
   document.getElementById('player-source').textContent = s.label;
   clearTimers();
@@ -198,21 +215,38 @@ function loadSource(i) {
   keys.style.display = 'none';
   const iframe = document.createElement('iframe');
   iframe.src = s.url;
-  iframe.allowFullscreen = true;
-  iframe.allow = 'autoplay; fullscreen; encrypted-media; picture-in-picture; clipboard-write';
+  iframe.setAttribute('allowfullscreen', '');
+  iframe.setAttribute('allow', 'autoplay; fullscreen; encrypted-media; picture-in-picture; clipboard-write');
   iframe.title = cur.title;
   frame().innerHTML = '';
   frame().appendChild(iframe);
+
+  if (framed()) {
+    // Nested frames are the one environment that genuinely blocks third-party
+    // players — send the viewer to the top-level player page.
+    const note = document.createElement('div');
+    note.className = 'player-framed-note';
+    note.innerHTML = `<p>${t('player.framed')}</p>`;
+    const go = document.createElement('a');
+    go.className = 'btn btn-gold';
+    go.href = standaloneUrl();
+    go.target = '_blank';
+    go.rel = 'noopener noreferrer';
+    go.textContent = t('player.framedBtn');
+    go.addEventListener('click', (e) => { e.preventDefault(); window.open(go.href, '_blank', 'noopener'); });
+    note.appendChild(go);
+    frame().appendChild(note);
+  }
 
   const hint = document.createElement('div');
   hint.className = 'player-newtab-hint';
   hint.innerHTML = `<span>${t('player.iframeHint')}</span>`;
   const btn = document.createElement('a');
   btn.className = 'btn btn-gold btn-sm';
-  btn.href = s.url;
+  btn.href = standaloneUrl();
   btn.target = '_blank';
   btn.rel = 'noopener noreferrer';
-  btn.textContent = '↗ ' + t('player.newtab');
+  btn.textContent = '↗ ' + t('player.standalone');
   hint.appendChild(btn);
   frame().appendChild(hint);
   let frameLoaded = false;

@@ -6,7 +6,7 @@
    ============================================================================ */
 
 import { IMG, GENRES, SEARCH_DEBOUNCE, SORTS, CERTIFICATIONS, LIB_LANGS } from './config.js';
-import { t, getLang, setLang, applyI18n, GENRE_NAMES, LANGS, langMeta } from './i18n.js';
+import { t, getLang, setLang, applyI18n, GENRE_NAMES, LANGS, langMeta, langCoverage } from './i18n.js';
 import {
   verifyKey, apiState, getTrending, getPopular, getTopRated, getNowPlaying,
   getUpcoming, getKorean, getJapanese, getIndonesian, getHollywood, getFamily,
@@ -505,12 +505,16 @@ function initLangMenu() {
       b.classList.toggle('active', b.dataset.setlang === getLang()));
   };
 
-  menu.innerHTML = LANGS.map((l) => `
+  menu.innerHTML = LANGS.map((l) => {
+    const cov = langCoverage(l.code);
+    return `
     <button class="lang-item" data-setlang="${l.code}">
       <span class="li-flag">${l.flag}</span>
       <span class="li-native">${l.native}</span>
+      ${cov < 100 ? `<span class="li-cov" title="${t('lang.coverage')}">${cov}%</span>` : '<span class="li-cov full">✓</span>'}
       <span class="li-code">${l.code.toUpperCase()}</span>
-    </button>`).join('');
+    </button>`;
+  }).join('');
 
   btn.addEventListener('click', (e) => {
     e.stopPropagation();
@@ -524,7 +528,10 @@ function initLangMenu() {
   // footer <select> mirrors the same choice
   const footerSel = $('footer-lang');
   if (footerSel) {
-    footerSel.innerHTML = LANGS.map((l) => `<option value="${l.code}">${l.flag} ${l.native}</option>`).join('');
+    footerSel.innerHTML = LANGS.map((l) => {
+      const cov = langCoverage(l.code);
+      return `<option value="${l.code}">${l.flag} ${l.native}${cov < 100 ? ` · ${cov}%` : ''}</option>`;
+    }).join('');
     footerSel.value = getLang();
     footerSel.addEventListener('change', () => setLang(footerSel.value));
   }

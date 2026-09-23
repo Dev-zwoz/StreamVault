@@ -163,19 +163,22 @@ Shop of Horrors · Plan 9 from Outer Space · Suddenly · Nosferatu · The Gener
 
 ---
 
-## Language support — 13 languages
+## Language support — 19 languages
 
 The navbar globe switches the whole UI dictionary (`js/i18n.js`) **and** the
 TMDB `language=` param, so titles, overviews and genre names re-localize live:
 
 `English · Bahasa Indonesia · Español · Português (BR) · Français · Deutsch ·
-Русский · Türkçe · हिन्दी · 日本語 · 한국어 · 中文 · العربية`
+Русский · Türkçe · हिन्दी · 日本語 · 한국어 · 中文 · العربية · Tiếng Việt ·
+ไทย · Filipino · Nederlands · Polski · Українська`
 
-English and Indonesian are translated in full; the other eleven ship the core
-shell (navigation, hero, library, filters, buttons, footer) and fall back to
-English for long-form copy — drop more keys into the matching object in
-`js/i18n.js` to extend any language. Arabic switches the document to RTL
-automatically (`<html dir="rtl">` + mirrored menu/rank CSS).
+English and Indonesian are translated in full. The other seventeen packs cover
+the core shell (navigation, hero, rows, library tabs, sorts, filters, player
+and account strings, toasts) and fall back to English for long-form copy; the
+language menu and the settings select show each pack's coverage percentage.
+Arabic switches the document to RTL automatically (`<html dir="rtl">` +
+mirrored menu/rank CSS). TMDB's content language follows the UI choice, and the
+library has a separate content-language filter with 30 languages.
 
 ---
 
@@ -216,6 +219,29 @@ The Library view (`#view-movies`) is deliberately **not** paginated by design:
 - **Infinite scroll** — the loader keeps pulling pages (up to TMDB's 500-page ceiling per query) until you stop scrolling; every result is filterable and no section is capped.
 
 ---
+
+## Standalone player page (`watch.html`)
+
+Browsers refuse to run a third-party player (VidRift) inside a *nested* frame —
+which is exactly what happens when the site is shown inside a preview panel, an
+in-app browser or any other wrapper. StreamVault therefore ships a top-level
+player page:
+
+```
+watch.html?type=movie&id=550&title=Fight%20Club
+watch.html?type=tv&id=1399&s=1&e=1&title=Game%20of%20Thrones
+```
+
+It carries the source switcher (Internet Archive MP4 vs VidRift HD), resume,
+season/episode context and the credit line. Two entry points use it:
+
+- the **↗ Standalone player** pill in the cinema player (always available), and
+- a gold notice inside the player that appears automatically whenever the site
+  detects it is running inside a nested frame.
+
+No `sandbox` attribute is used anywhere — the player iframes carry
+`allow="autoplay; fullscreen; encrypted-media; picture-in-picture"`,
+`allowfullscreen` and `referrerpolicy="origin"`, which is what VidRift needs.
 
 ## Player sources
 
