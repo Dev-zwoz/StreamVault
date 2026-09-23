@@ -66,15 +66,31 @@ export function initNavbar() {
 // Section reveals + stats count-up
 // ---------------------------------------------------------------------------
 export function initReveals() {
+  const targets = document.querySelectorAll('.reveal');
+  if (!('IntersectionObserver' in window)) {
+    document.documentElement.classList.add('no-io');
+    targets.forEach((el) => el.classList.add('in'));
+    const s = document.getElementById('stats');
+    if (s) countUp(s);
+    return;
+  }
   const io = new IntersectionObserver((entries) => {
     entries.forEach((e) => {
       if (!e.isIntersecting) return;
       e.target.classList.add('in');
       io.unobserve(e.target);
+      // stagger any children that never got their own observer (static markup)
+      const kids = e.target.querySelectorAll('.reveal-child:not(.in)');
+      kids.forEach((kid, i) => {
+        if (!kid.style.getPropertyValue('--reveal-delay')) {
+          kid.style.setProperty('--reveal-delay', `${Math.min(i, 8) * 60}ms`);
+        }
+        kid.classList.add('in');
+      });
       if (e.target.id === 'stats') countUp(e.target);
     });
   }, { rootMargin: '-40px' });
-  document.querySelectorAll('.reveal').forEach((el) => io.observe(el));
+  targets.forEach((el) => io.observe(el));
 }
 
 function countUp(section) {
@@ -195,6 +211,41 @@ export function initDiscordPill() {
       }
     });
   }, { passive: true });
+}
+
+// ---------------------------------------------------------------------------
+// Marquee ticker — duplicates its content so the loop is seamless
+// ---------------------------------------------------------------------------
+export function initMarquee(track, html) {
+  if (!track) return;
+  if (!html) { track.closest('.ticker')?.remove(); return; }
+  track.innerHTML = `<div class="tick-run">${html}</div><div class="tick-run" aria-hidden="true">${html}</div>`;
+}
+
+// ---------------------------------------------------------------------------
+// Section eyebrow parallax — subtle translate on scroll (transform only)
+// ---------------------------------------------------------------------------
+export function initSectionParallax() {
+  if (reducedMotion || !finePointer) return;
+  const targets = [...document.querySelectorAll('.section-head .eyebrow')];
+  if (!targets.length) return;
+  let ticking = false;
+  const onScroll = () => {
+    if (ticking) return;
+    ticking = true;
+    requestAnimationFrame(() => {
+      ticking = false;
+      const vh = innerHeight;
+      targets.forEach((el) => {
+        const r = el.getBoundingClientRect();
+        if (r.bottom < -100 || r.top > vh + 100) return;
+        const p = (r.top + r.height / 2 - vh / 2) / vh; // -0.5 … 0.5
+        el.style.transform = `translateY(${(p * -12).toFixed(1)}px)`;
+      });
+    });
+  };
+  addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
 }
 
 // ---------------------------------------------------------------------------

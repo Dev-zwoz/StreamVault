@@ -19,6 +19,11 @@
   transition-delay: var(--reveal-delay, 0ms);
 }
 .reveal-child.in { opacity: 1; transform: none; }
+/* children of an already-revealed section must never stay invisible:
+   static markup (How-it-works steps, feature cards) has no JS class toggle. */
+.reveal.in .reveal-child, .in > .reveal-child { opacity: 1; transform: none; }
+/* no-JS / no-IntersectionObserver safety net */
+.no-io .reveal, .no-io .reveal-child { opacity: 1 !important; transform: none !important; }
 
 /* ---------------------------------------------------------------- logo */
 .sv-logo .sv-wheel {
@@ -158,3 +163,219 @@
   .nav-logo .sv-tri, .footer-brand .sv-tri, .nav-logo .sv-wheel { animation: none; }
   .reveal.in .stat, .reveal.in .step::before, .badge-free { animation: none; }
 }
+
+/* ============================================================================
+   ROUND 3 — more motion everywhere
+   ============================================================================ */
+
+/* ---------------------------------------------------------------- avatar & badges */
+@keyframes ringSpin { to { transform: rotate(360deg); } }
+@keyframes crownPulse {
+  0%, 100% { transform: scale(1) rotate(0); box-shadow: 0 3px 12px rgba(245,197,24,.45); }
+  50% { transform: scale(1.14) rotate(8deg); box-shadow: 0 3px 20px rgba(245,197,24,.85); }
+}
+
+/* ---------------------------------------------------------------- ambient orbs drift */
+.orb { animation: orbDrift 26s ease-in-out infinite alternate; }
+.orb.o2 { animation-duration: 34s; animation-delay: -6s; }
+.orb.o3 { animation-duration: 42s; animation-delay: -14s; }
+@keyframes orbDrift {
+  from { transform: translate3d(0, 0, 0) scale(1); }
+  to { transform: translate3d(4vw, -3vh, 0) scale(1.12); }
+}
+
+/* ---------------------------------------------------------------- ticker */
+@keyframes tickerScroll { from { transform: translateX(0); } to { transform: translateX(-100%); } }
+.ticker:hover .tick-run { animation-play-state: paused; }
+
+/* ---------------------------------------------------------------- logo: alive all the time */
+.nav-logo .sv-ring, .pre-logo .sv-ring, .footer-brand .sv-logo .sv-ring { transform-origin: 256px 256px; animation: ringSpinSlow 40s linear infinite; }
+@keyframes ringSpinSlow { to { transform: rotate(360deg); } }
+.nav-logo .sv-tri { animation: triBeat 3.4s ease-in-out infinite; transform-origin: 256px 256px; }
+@keyframes triBeat {
+  0%, 100% { transform: scale(1); filter: drop-shadow(0 0 0 rgba(245,197,24,0)); }
+  45% { transform: scale(1.09); filter: drop-shadow(0 0 10px rgba(245,197,24,.8)); }
+}
+.nav-logo:hover .sv-wheel { animation: wheelLock .9s var(--ease); transform-origin: 256px 256px; }
+@keyframes wheelLock { 0% { transform: rotate(0); } 60% { transform: rotate(320deg); } 100% { transform: rotate(360deg); } }
+
+/* ---------------------------------------------------------------- section entrances */
+.reveal { filter: blur(6px); transition: opacity var(--dur-slow) var(--ease), transform var(--dur-slow) var(--ease), filter var(--dur-slow) var(--ease); }
+.reveal.in { filter: blur(0); }
+
+/* ---------------------------------------------------------------- card shine sweep + poster push */
+.card-media::after {
+  content: ''; position: absolute; inset: 0; z-index: 2; pointer-events: none;
+  background: linear-gradient(115deg, transparent 32%, rgba(255,255,255,.22) 48%, transparent 62%);
+  transform: translateX(-120%); opacity: 0;
+}
+.card:hover .card-media::after { animation: cardShine 1.05s var(--ease); }
+@keyframes cardShine { 0% { transform: translateX(-120%); opacity: 1; } 100% { transform: translateX(120%); opacity: 0; } }
+.card:hover .card-media img { transform: scale(1.07); }
+.card:hover { box-shadow: 0 26px 60px rgba(0,0,0,.55), 0 0 0 1px rgba(245,197,24,.22); }
+
+/* ---------------------------------------------------------------- continue-watching bar */
+.card-progress i { position: relative; overflow: hidden; }
+.card-progress i::after {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.7), transparent);
+  animation: progressSweep 2.4s linear infinite;
+}
+@keyframes progressSweep { from { transform: translateX(-100%); } to { transform: translateX(100%); } }
+
+/* ---------------------------------------------------------------- library tabs + filters */
+.lib-tabs button.active { animation: tabPop .42s var(--ease); }
+@keyframes tabPop { 0% { transform: scale(.94); } 60% { transform: scale(1.05); } 100% { transform: scale(1); } }
+.movie-grid .card { animation: cardIn .5s var(--ease) backwards; }
+@keyframes cardIn { from { opacity: 0; transform: translateY(14px) scale(.97); filter: blur(4px); } }
+.ep-chip { animation: chipIn .4s var(--ease) backwards; }
+@keyframes chipIn { from { opacity: 0; transform: translateY(8px) scale(.96); } }
+
+/* ---------------------------------------------------------------- account & admin */
+.ad-row { animation: rowIn .42s var(--ease) backwards; }
+@keyframes rowIn { from { opacity: 0; transform: translateX(-10px); } }
+.ad-row.sel { animation: rowSelect .5s var(--ease); }
+@keyframes rowSelect { 0% { background: rgba(245,197,24,.22); } }
+.ad-status.timeout, .ad-status.banned { animation: statusPulse 2.4s ease-in-out infinite; }
+@keyframes statusPulse { 0%, 100% { opacity: 1; } 50% { opacity: .55; } }
+.admin-badge svg { animation: shieldGlow 3s ease-in-out infinite; }
+@keyframes shieldGlow { 0%, 100% { filter: drop-shadow(0 0 0 rgba(245,197,24,0)); } 50% { filter: drop-shadow(0 0 8px rgba(245,197,24,.9)); } }
+.astat b { animation: statGlow 4.2s ease-in-out infinite; }
+@keyframes statGlow { 0%, 100% { text-shadow: 0 0 0 rgba(245,197,24,0); } 50% { text-shadow: 0 0 18px rgba(245,197,24,.55); } }
+
+/* ---------------------------------------------------------------- player source bar */
+.ps-chip.active { animation: chipActive .45s var(--ease); }
+@keyframes chipActive { 0% { transform: scale(.9); } 70% { transform: scale(1.06); } }
+.player-frame iframe, .player-frame video { animation: playerIn .5s var(--ease); }
+@keyframes playerIn { from { opacity: 0; transform: scale(.985); } }
+
+/* ---------------------------------------------------------------- floating discord pill */
+#discord-pill svg { animation: pillBob 3.6s ease-in-out infinite; }
+@keyframes pillBob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-2px); } }
+
+/* ---------------------------------------------------------------- reduced motion: kill the new stuff too */
+@media (prefers-reduced-motion: reduce) {
+  .orb, .tick-run, .nav-logo .sv-ring, .pre-logo .sv-ring, .nav-logo .sv-tri,
+  .ua-ring, .ua-crown, .astat b, .admin-badge svg, .card-progress i::after,
+  #discord-pill svg, .ad-row, .movie-grid .card, .ep-chip, .ad-status { animation: none !important; }
+  .card:hover .card-media::after { animation: none; }
+  .reveal { filter: none; }
+}
+.force-reduced-motion .orb,
+.force-reduced-motion .tick-run,
+.force-reduced-motion .nav-logo .sv-ring,
+.force-reduced-motion .nav-logo .sv-tri,
+.force-reduced-motion .ua-ring,
+.force-reduced-motion .ua-crown,
+.force-reduced-motion .card-progress i::after,
+.force-reduced-motion .admin-badge svg,
+.force-reduced-motion .astat b { animation: none !important; }
+
+/* ============================================================================
+   ROUND 4 — extra flourishes (transform/opacity only, reduced-motion aware)
+   ============================================================================ */
+
+/* ---------------------------------------------------------------- eyebrow shimmer */
+.section-head .eyebrow, .hero-kicker {
+  position: relative; overflow: hidden;
+}
+.section-head .eyebrow::after {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(100deg, transparent 35%, rgba(255,255,255,.35) 50%, transparent 65%);
+  transform: translateX(-120%);
+  animation: sheen 5.5s var(--ease) infinite;
+}
+@keyframes sheen { 0%, 55% { transform: translateX(-120%); } 85%, 100% { transform: translateX(120%); } }
+
+/* ---------------------------------------------------------------- genre tiles */
+.genre-tile svg { transition: transform .45s var(--ease), filter .45s var(--ease); }
+.genre-tile:hover svg { transform: translateY(-3px) scale(1.14) rotate(-5deg); filter: drop-shadow(0 6px 16px rgba(245,197,24,.5)); }
+.genre-tile::before {
+  content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+  background: radial-gradient(140px 90px at var(--mx, 50%) var(--my, 0%), rgba(245,197,24,.22), transparent 70%);
+  opacity: 0; transition: opacity .4s var(--ease);
+}
+.genre-tile:hover::before { opacity: 1; }
+.gt-arrow { transition: transform .38s var(--ease), opacity .38s var(--ease); opacity: .65; }
+.genre-tile:hover .gt-arrow { transform: translateX(5px); opacity: 1; }
+
+/* ---------------------------------------------------------------- feature cards */
+.feature-card { transition: transform .4s var(--ease), border-color .3s, box-shadow .4s var(--ease); }
+.feature-card:hover { transform: translateY(-7px) rotate(-.4deg); box-shadow: 0 24px 60px rgba(0,0,0,.5); }
+.feature-icon { position: relative; }
+.feature-icon::after {
+  content: ''; position: absolute; inset: -6px; border-radius: 50%;
+  border: 1px dashed rgba(245,197,24,.45); opacity: 0;
+  animation: ringSpin 12s linear infinite;
+  transition: opacity .4s var(--ease);
+}
+.feature-card:hover .feature-icon::after { opacity: 1; }
+
+/* ---------------------------------------------------------------- steps */
+.step { transition: transform .45s var(--ease), border-color .3s var(--ease), background .3s; }
+.step:hover { transform: translateY(-6px); border-color: rgba(245,197,24,.4); }
+.step-num {
+  background: linear-gradient(135deg, var(--gold), var(--gold-deep));
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+  animation: statGlow 5s ease-in-out infinite;
+}
+
+/* ---------------------------------------------------------------- top-10 ranks */
+.card > .rank { animation: rankBreath 4.5s ease-in-out infinite; }
+@keyframes rankBreath {
+  0%, 100% { opacity: .92; filter: drop-shadow(0 0 0 rgba(245,197,24,0)); }
+  50% { opacity: 1; filter: drop-shadow(0 0 14px rgba(245,197,24,.55)); }
+}
+
+/* ---------------------------------------------------------------- auth card */
+.auth-card { position: relative; overflow: hidden; }
+.auth-card::before {
+  content: ''; position: absolute; inset: -40%;
+  background: conic-gradient(from 0deg, transparent 0 62%, rgba(245,197,24,.35) 74%, transparent 86%);
+  animation: ringSpin 9s linear infinite; pointer-events: none; opacity: .5;
+}
+.auth-card > * { position: relative; z-index: 1; }
+
+/* ---------------------------------------------------------------- load-more + buttons */
+#load-more { position: relative; }
+#load-more::after {
+  content: ''; position: absolute; inset: 0; border-radius: inherit;
+  box-shadow: 0 0 0 0 rgba(245,197,24,.45);
+  animation: pulseRing 2.8s var(--ease) infinite;
+}
+@keyframes pulseRing {
+  0% { box-shadow: 0 0 0 0 rgba(245,197,24,.4); }
+  70% { box-shadow: 0 0 0 12px rgba(245,197,24,0); }
+  100% { box-shadow: 0 0 0 0 rgba(245,197,24,0); }
+}
+
+/* ---------------------------------------------------------------- live badge + pill */
+#status-badge .dot { animation: livePulse 2.2s ease-in-out infinite; }
+@keyframes livePulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(245,197,24,.6); opacity: 1; }
+  50% { box-shadow: 0 0 0 6px rgba(245,197,24,0); opacity: .55; }
+}
+#discord-pill { transition: transform .35s var(--ease), box-shadow .35s var(--ease); }
+#discord-pill:hover { transform: translateY(-3px) scale(1.04); box-shadow: 0 18px 44px rgba(88,101,242,.45); }
+
+/* ---------------------------------------------------------------- player hint */
+.player-newtab-hint { transition: opacity .5s var(--ease), transform .5s var(--ease); transform: translateY(10px); }
+.player-newtab-hint.urgent { border-color: rgba(245,197,24,.6); box-shadow: 0 0 0 1px rgba(245,197,24,.35), 0 18px 50px rgba(0,0,0,.6); }
+.player-newtab-hint.urgent span::before { content: '⚠ '; }
+
+/* ---------------------------------------------------------------- modal + toast entrance */
+.modal.open, #settings-modal.open { animation: modalIn .42s var(--ease); }
+@keyframes modalIn { from { opacity: 0; transform: translateY(18px) scale(.985); } }
+#toasts .toast { animation: toastIn .42s var(--ease); }
+@keyframes toastIn { from { opacity: 0; transform: translateX(26px) scale(.96); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .section-head .eyebrow::after, .card > .rank, .auth-card::before, #load-more::after,
+  .feature-icon::after, #status-badge .dot, .step-num { animation: none !important; }
+  .genre-tile:hover svg, .feature-card:hover, .step:hover { transform: none; }
+}
+.force-reduced-motion .section-head .eyebrow::after,
+.force-reduced-motion .card > .rank,
+.force-reduced-motion .auth-card::before,
+.force-reduced-motion #load-more::after,
+.force-reduced-motion #status-badge .dot { animation: none !important; }

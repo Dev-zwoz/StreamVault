@@ -37,8 +37,10 @@ StreamVault/
 │   ├── ui.js                # Cards, carousels, modal, watchlist, toasts
 │   ├── animations.js        # Preloader, parallax, count-up, cursor glow
 │   ├── player.js            # Cinema-mode player + keyboard + resume
-│   ├── i18n.js              # EN/ID dictionary & language switching
-│   └── app.js               # Boot, views, hero rotation, grid, search
+│   ├── i18n.js              # 13 languages (EN/ID full, rest core) + RTL
+│   ├── account.js           # Accounts, sessions, settings, kick/timeout/ban
+│   ├── admin.js             # Owner console: users, credentials, history
+│   └── app.js               # Boot, views, hero, library, search, language menu
 ├── data/
 │   ├── fallback-movies.json # 20-entry offline catalogue (SVG posters)
 │   └── public-domain-map.json # TMDB id → Internet Archive identifier
@@ -161,11 +163,76 @@ Shop of Horrors · Plan 9 from Outer Space · Suddenly · Nosferatu · The Gener
 
 ---
 
-## Language support
+## Language support — 13 languages
 
-The EN/ID toggle switches the whole UI dictionary (`js/i18n.js`) **and** the
-TMDB `language=` param (`en-US` / `id-ID`), so overviews and genre names
-re-localize live. The `<html lang>` attribute follows the toggle.
+The navbar globe switches the whole UI dictionary (`js/i18n.js`) **and** the
+TMDB `language=` param, so titles, overviews and genre names re-localize live:
+
+`English · Bahasa Indonesia · Español · Português (BR) · Français · Deutsch ·
+Русский · Türkçe · हिन्दी · 日本語 · 한국어 · 中文 · العربية`
+
+English and Indonesian are translated in full; the other eleven ship the core
+shell (navigation, hero, library, filters, buttons, footer) and fall back to
+English for long-form copy — drop more keys into the matching object in
+`js/i18n.js` to extend any language. Arabic switches the document to RTL
+automatically (`<html dir="rtl">` + mirrored menu/rank CSS).
+
+---
+
+## Accounts, history & the owner console
+
+Accounts are a **client-side demo**: everything lives in `localStorage` under
+`sv:accounts` (email → record), `sv:user` (session), `sv:log` (event log).
+Passwords are hashed with SHA-256 (`crypto.subtle`, with a tiny fallback for
+plain-http hosts) — the console shows the hash, never the plaintext.
+
+| Role | What they can do |
+| --- | --- |
+| **Viewer** | Watchlist, resume positions, watch history, profile page, settings (language, quality, accent, motion) |
+| **Owner (admin)** | Everything above + **Admin console**: every account in this browser with email, password hash, sign-in history, watch history — and live moderation: **kick**, **timeout** (1h / 24h / 7d / permanent), **ban / unban**, **promote / demote**, **message** (surfaces as a toast for that member), **reset password**, **clear history**, **delete account** |
+
+Demo owner login (created automatically on first load):
+
+```
+email:    admin@streamvault.local
+password: vaultmaster
+```
+
+Owner actions are enforced on the member's next interaction: `enforceSession()`
+runs at boot, timeouts block playback (`playbackBlocked()`), kicks force a
+sign-out, bans lock the account out entirely. Because there is no backend, the
+console only sees accounts created **in that browser** — wire `js/account.js`
+and `js/admin.js` to Supabase/your API for real multi-device moderation.
+
+---
+
+## Library — unlimited movies, TV & anime
+
+The Library view (`#view-movies`) is deliberately **not** paginated by design:
+
+- **Type tabs:** All · Movies · TV Shows · Anime (`/discover/tv` + animation genre + Japanese origin for anime)
+- **Sort:** most popular, highest rated, newest, oldest, most voted, A–Z, biggest box office
+- **Filters:** genre, age rating (G/PG/PG-13/R/NC-17, US scheme), original language, minimum score, year from/to, and **Playable now** (verified public-domain titles)
+- **Infinite scroll** — the loader keeps pulling pages (up to TMDB's 500-page ceiling per query) until you stop scrolling; every result is filterable and no section is capped.
+
+---
+
+## Player sources
+
+`js/archive.js` resolves the best source per title, best first:
+
+1. **`LICENSED_SOURCES`** — streams you own the rights to (config hook)
+2. **Internet Archive** — verified public-domain features, played natively in a
+   `<video>` element (works even where third-party iframes are blocked)
+3. **VidRift** — the HD embed for everything else, with the branded player
+   (`brand=StreamVault&brandColor=F5C518`), resume + quality postMessage API,
+   season/episode picker for TV and anime
+
+The player bar lets the viewer **switch source at any time** and always offers
+an “open in new tab” escape hatch. Public-domain map currently holds **18
+verified features** (add more in `data/public-domain-map.json`).
+
+> ⚠️ Never add a `sandbox` attribute to the VidRift iframe — it disables playback.
 
 ---
 
@@ -189,8 +256,10 @@ folder. Everything works client-side; you only lose the key-hiding proxy.
   the TMDB API but is not endorsed or certified by TMDB.*
 - Watch-provider data: **Powered by [JustWatch](https://www.justwatch.com/)**.
 - Public-domain streams: [Internet Archive](https://archive.org).
-- Embedded playback: [VidRift](https://vidrift.net/) — metadata and artwork
-  from TMDB; VidRift is not endorsed or certified by TMDB.
+- Embedded playback: [VidRift](https://vidrift.net/) — built and hosted by
+  **[Rust (cinrift)](https://discord.com/users/1515548260196941864)**. Huge
+  thanks for keeping a free HD embed available. VidRift is not endorsed or
+  certified by TMDB.
 - Takedown / content reports: [message me on Discord](https://discord.com/users/1469638087268110399).
 
 ## Credits
@@ -198,5 +267,9 @@ folder. Everything works client-side; you only lose the key-hiding proxy.
 Built by **[Dev-zwoz](https://github.com/Dev-zwoz)** ·
 [Discord](https://discord.com/users/1469638087268110399) ·
 [Instagram @vzowzz](https://www.instagram.com/vzowzz/)
+
+Embedded player **VidRift** by **Rust (cinrift)** —
+[Discord](https://discord.com/users/1515548260196941864). Thank you for the
+free embed that makes HD playback possible.
 
 © 2026 StreamVault — Premium cinema, unlocked.

@@ -2,6 +2,7 @@
    StreamVault — api.js
    TMDB data layer: fetch queue (rate-limited), in-memory + sessionStorage
    cache with 30-min TTL, key verification, graceful offline fallback.
+   Covers movies, TV shows and anime (animation + JP origin/language).
    ============================================================================ */
 
 import { TMDB_API_KEY, TMDB_BASE, CACHE_TTL, EMAIL_VALIDATE_API } from './config.js';
@@ -18,8 +19,8 @@ function cacheGet(key) {
   try {
     const raw = sessionStorage.getItem('svc:' + key);
     if (raw) {
-      const { t, v } = JSON.parse(raw);
-      if (Date.now() - t < CACHE_TTL) { mem.set(key, { t, v }); return v; }
+      const { time, value } = JSON.parse(raw);
+      if (Date.now() - time < CACHE_TTL) { mem.set(key, { t: time, v: value }); return value; }
       sessionStorage.removeItem('svc:' + key);
     }
   } catch { /* storage full or disabled — memory cache still works */ }
@@ -27,10 +28,10 @@ function cacheGet(key) {
 }
 
 function cacheSet(key, v) {
-  const entry = { t: Date.now(), v };
-  mem.set(key, entry);
+  const entry = { time: Date.now(), value: v };
+  mem.set(key, { t: entry.time, v });
   try { sessionStorage.setItem('svc:' + key, JSON.stringify(entry)); }
-  catch { /* quota exceeded — evict oldest sv cache entries */
+  catch { /* quota exceeded — evict half the cache */
     try {
       const keys = Object.keys(sessionStorage).filter((k) => k.startsWith('svc:'));
       keys.slice(0, Math.ceil(keys.length / 2)).forEach((k) => sessionStorage.removeItem(k));
@@ -48,8 +49,7 @@ const WINDOW_MS = 1000, MAX_PER_WINDOW = 40;
 function pump() {
   while (queue.length && inWindow < MAX_PER_WINDOW) {
     inWindow++;
-    const job = queue.shift();
-    job();
+    queue.shift()();
   }
 }
 setInterval(() => { inWindow = 0; pump(); }, WINDOW_MS);
@@ -66,10 +66,6 @@ function throttledFetch(url) {
 // ---------------------------------------------------------------------------
 export const apiState = { online: true, keyValid: true };
 
-/**
- * GET a TMDB path with params. Returns parsed JSON.
- * Localized by current UI language; cached 30 min per (path, params, lang).
- */
 export async function tmdb(path, params = {}) {
   const search = new URLSearchParams({ api_key: TMDB_API_KEY, language: tmdbLang(), ...params });
   const url = `${TMDB_BASE}${path}?${search}`;
@@ -86,16 +82,13 @@ export async function tmdb(path, params = {}) {
   return json;
 }
 
-/**
- * Startup key verification — called once on load.
- * Resolves { ok, reason } and never throws; logs the result.
- */
+/** Startup key verification — resolves { ok, reason } and never throws */
 export async function verifyKey() {
   try {
     const res = await throttledFetch(`${TMDB_BASE}/configuration?api_key=${TMDB_API_KEY}`);
     if (res.status === 401) {
       apiState.keyValid = false;
-      console.warn('[StreamVault] TMDB key INVALID (401). Falling back to offline data. Fix TMDB_API_KEY in js/config.js.');
+      console.warn('[StreamVault] TMDB key INVALID (401). Falling back to offline data.');
       return { ok: false, reason: 'invalid-key' };
     }
     if (!res.ok) throw new Error(String(res.status));
@@ -109,7 +102,7 @@ export async function verifyKey() {
 }
 
 // ---------------------------------------------------------------------------
-// Fallback data
+// Fallback data + normalisation
 // ---------------------------------------------------------------------------
 let fallbackCache = null;
 export async function getFallback() {
@@ -119,25 +112,47 @@ export async function getFallback() {
   return fallbackCache;
 }
 
-/** Movie list fetch that degrades to fallback data instead of throwing. */
+/**
+ * Normalise a TMDB list item so every card has the same shape:
+ * title, release_date, media_type and a stable `date`.
+ */
+export function norm(m) {
+  if (!m) return m;
+  const media_type = m.media_type || (m.first_air_date !== undefined && m.title === undefined ? 'tv' : 'movie');
+  return {
+    ...m,
+    media_type: media_type === 'person' ? 'person' : media_type,
+    title: m.title || m.name || m.original_title || m.original_name || '',
+    release_date: m.release_date || m.first_air_date || '',
+  };
+}
+
+const isAnimeItem = (m) => (m.genre_ids || m.genres?.map((g) => g.id) || []).includes(16) &&
+  ['ja', 'zh', 'ko'].includes(m.original_language);
+
+export { isAnimeItem };
+
+/** List fetch that degrades to fallback data instead of throwing. */
 export async function movieList(path, params = {}) {
   if (apiState.online && apiState.keyValid) {
-    try { return await tmdb(path, params); }
-    catch (e) { console.warn('[StreamVault] list fetch failed, using fallback:', e.message); }
+    try {
+      const data = await tmdb(path, params);
+      if (Array.isArray(data.results)) data.results = data.results.map(norm);
+      return data;
+    } catch (e) { console.warn('[StreamVault] list fetch failed, using fallback:', e.message); }
   }
   const fb = await getFallback();
-  return { page: 1, total_pages: 1, results: fb.results };
+  return { page: 1, total_pages: 1, results: fb.results.map(norm) };
 }
 
 // ---------------------------------------------------------------------------
-// Convenience endpoints
+// Endpoints — movies
 // ---------------------------------------------------------------------------
 export const getTrending = () => movieList('/trending/movie/week');
 export const getPopular = (page = 1) => movieList('/movie/popular', { page });
 export const getTopRated = (page = 1) => movieList('/movie/top_rated', { page });
 export const getNowPlaying = (page = 1) => movieList('/movie/now_playing', { page });
 export const getUpcoming = (page = 1) => movieList('/movie/upcoming', { page });
-export const getGenreList = () => tmdb('/genre/movie/list');
 export const searchMovies = (query, page = 1) => movieList('/search/movie', { query, page, include_adult: false });
 export const discover = (params) => movieList('/discover/movie', { include_adult: false, ...params });
 
@@ -147,23 +162,49 @@ export const getIndonesian = () => discover({ with_origin_country: 'ID', sort_by
 export const getHollywood = () => discover({ with_origin_country: 'US', sort_by: 'revenue.desc', 'vote_count.gte': 1000 });
 export const getFamily = () => discover({ with_genres: '10751', sort_by: 'popularity.desc', 'vote_count.gte': 300, certification_country: 'US' });
 
-export const getMovie = (id) =>
-  tmdb(`/movie/${id}`, { append_to_response: 'videos,credits,similar,recommendations,external_ids' });
-export const getProviders = (id) => tmdb(`/movie/${id}/watch/providers`);
+// ---------------------------------------------------------------------------
+// Endpoints — TV & anime
+// ---------------------------------------------------------------------------
+export const getTrendingAll = (page = 1) => movieList('/trending/all/week', { page });
+export const getTrendingTV = (page = 1) => movieList('/trending/tv/week', { page });
+export const discoverTV = (params) => movieList('/discover/tv', { include_adult: false, ...params });
+export const getTvPopular = (page = 1) => movieList('/tv/popular', { page });
+export const getTvOnAir = (page = 1) => movieList('/tv/on_the_air', { page });
 
-/** Fetch light details for a set of ids (used by Free Classics row offline-safe) */
+/** Anime: animation genre, Japanese origin, sane vote floor */
+export const getAnime = (params = {}) => discoverTV({
+  with_genres: '16', with_origin_country: 'JP', sort_by: 'popularity.desc',
+  'vote_count.gte': 50, ...params,
+});
+
+// ---------------------------------------------------------------------------
+// Endpoints — search & detail
+// ---------------------------------------------------------------------------
+export const searchMulti = (query, page = 1) =>
+  movieList('/search/multi', { query, page, include_adult: false });
+
+export const getMovie = async (id) => ({ media_type: 'movie', ...(await tmdb(`/movie/${id}`, { append_to_response: 'videos,credits,similar,recommendations,external_ids,release_dates' })) });
+export const getTV = async (id) => ({ media_type: 'tv', ...(await tmdb(`/tv/${id}`, { append_to_response: 'videos,credits,similar,recommendations,external_ids,content_ratings' })) });
+export const getSeason = (id, season) => tmdb(`/tv/${id}/season/${season}`);
+
+/** Detail fetch for either media type */
+export const getMedia = (type, id) => (type === 'tv' ? getTV(id) : getMovie(id));
+
+/** Where-to-watch, per media type */
+export const getProviders = (type, id) => tmdb(`/${type === 'tv' ? 'tv' : 'movie'}/${id}/watch/providers`);
+
+/** Light details for a set of movie ids (used by the playable-only filter) */
 export async function getMoviesByIds(ids) {
   const out = [];
   await Promise.all(ids.map(async (id) => {
-    try { out.push(await tmdb(`/movie/${id}`)); }
+    try { out.push(norm(await tmdb(`/movie/${id}`))); }
     catch { /* skip unfetchable */ }
   }));
   return out;
 }
 
 // ---------------------------------------------------------------------------
-// Email validation (Disify — APIVault "Data Validation", HTTPS+CORS, no key)
-// Falls back to a solid client-side regex when the API is unreachable.
+// Email validation (Disify — free, HTTPS+CORS, no key) with regex fallback
 // ---------------------------------------------------------------------------
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
@@ -181,7 +222,6 @@ export async function validateEmail(email) {
     if (j.dns === false) return { valid: false, reason: 'format' };
     return { valid: true };
   } catch {
-    // API down → accept on regex alone (graceful degradation)
     return { valid: true, degraded: true };
   }
 }

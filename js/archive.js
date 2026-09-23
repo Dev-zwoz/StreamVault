@@ -2,8 +2,10 @@
    StreamVault — archive.js
    Playable source resolution, in priority order:
      1. LICENSED_SOURCES (config.js hook — streams you own the rights to)
-     2. public-domain-map.json → Internet Archive MP4 (native <video>)
-     3. VidRift embed (iframe player addressed by TMDB id)
+     2. public-domain-map.json → Internet Archive MP4 (native <video>, plays
+        inside any frame, no third-party player required)
+     3. VidRift embed (HD iframe player addressed by TMDB id) — with our thanks
+        to Rust (cinrift): https://discord.com/users/1515548260196941864
    ============================================================================ */
 
 import { LICENSED_SOURCES, VIDRIFT } from './config.js';
@@ -29,7 +31,7 @@ export function pdEntry(tmdbId) {
   return pdMap ? pdMap[String(tmdbId)] || null : null;
 }
 
-/** TMDB ids of every public-domain film (for the Free Classics row) */
+/** TMDB ids of every public-domain film (playable natively) */
 export function pdIds() {
   return pdMap ? Object.keys(pdMap).filter((k) => k !== '_comment').map(Number) : [];
 }
@@ -52,7 +54,6 @@ async function resolveArchiveMp4(archiveId, preferredFile) {
     const hit = files.find((f) => f.name === preferredFile);
     if (hit) return urlFor(hit.name);
   }
-  // Best playable candidate: h.264/MPEG4 mp4, largest first
   const mp4s = files
     .filter((f) => /\.mp4$/i.test(f.name) && !/(trailer|sample|thumb)/i.test(f.name))
     .sort((a, b) => Number(b.size || 0) - Number(a.size || 0));
@@ -64,31 +65,49 @@ async function resolveArchiveMp4(archiveId, preferredFile) {
   throw new Error('No playable file in archive item');
 }
 
-/** Build a branded VidRift embed URL for a movie */
-export function vidriftUrl(tmdbId, title = '') {
-  const p = new URLSearchParams({ brand: VIDRIFT.brand, brandColor: VIDRIFT.brandColor });
+/** Build a branded VidRift embed URL (movie, or TV with season/episode) */
+export function vidriftUrl(tmdbId, title = '', type = 'movie', season = 1, episode = 1) {
+  const p = new URLSearchParams({ brand: VIDRIFT.brand, brandColor: VIDRIFT.brandColor, mobileSheets: '1' });
   if (title) p.set('title', title);
-  return `${VIDRIFT.base}/movie/${tmdbId}?${p}`;
+  try { p.set('brandLogo', new URL('assets/logo.svg', location.href).href); } catch { /* relative base only */ }
+  const path = type === 'tv' ? `tv/${tmdbId}/${season}/${episode}` : `movie/${tmdbId}`;
+  return `${VIDRIFT.base}/${path}?${p}`;
 }
 
 /**
- * Resolve the playable source for a TMDB id.
- * Returns { type: 'mp4'|'hls'|'iframe', url, label, kind }
- *   kind: 'licensed' | 'public-domain' | 'vidrift'
+ * Every playable source for a title, best first.
+ * Returns [{ type: 'mp4'|'hls'|'iframe', url, label, kind }]
  */
-export async function resolveSource(tmdbId, title = '') {
+export async function listSources(tmdbId, title = '', type = 'movie', season = 1, episode = 1) {
+  const out = [];
   const licensed = LICENSED_SOURCES[tmdbId] || LICENSED_SOURCES[String(tmdbId)];
-  if (licensed) return { ...licensed, kind: 'licensed' };
+  if (licensed) out.push({ ...licensed, kind: 'licensed' });
 
-  await loadPdMap();
-  const pd = pdEntry(tmdbId);
-  if (pd) {
-    try {
-      const url = await resolveArchiveMp4(pd.archiveId, pd.file);
-      return { type: 'mp4', url, label: 'Internet Archive · Public Domain', kind: 'public-domain' };
-    } catch (e) {
-      console.warn('[StreamVault] Archive resolution failed, falling back to VidRift:', e.message);
+  if (type === 'movie') {
+    await loadPdMap();
+    const pd = pdEntry(tmdbId);
+    if (pd) {
+      try {
+        const url = await resolveArchiveMp4(pd.archiveId, pd.file);
+        out.push({ type: 'mp4', url, label: 'Internet Archive · Public Domain', kind: 'public-domain', sourceKey: 'archive' });
+      } catch (e) {
+        console.warn('[StreamVault] Archive resolution failed:', e.message);
+      }
     }
   }
-  return { type: 'iframe', url: vidriftUrl(tmdbId, title), label: 'VidRift', kind: 'vidrift' };
+
+  out.push({
+    type: 'iframe',
+    url: vidriftUrl(tmdbId, title, type, season, episode),
+    label: 'VidRift · HD',
+    kind: 'vidrift',
+    sourceKey: 'vidrift',
+  });
+  return out;
+}
+
+/** Single best source (kept for compatibility) */
+export async function resolveSource(tmdbId, title = '', type = 'movie', season = 1, episode = 1) {
+  const sources = await listSources(tmdbId, title, type, season, episode);
+  return sources[0];
 }
