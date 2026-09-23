@@ -161,11 +161,39 @@ Shop of Horrors · Plan 9 from Outer Space · Suddenly · Nosferatu · The Gener
 
 ---
 
-## Language support
+## 19 interface languages
 
-The EN/ID toggle switches the whole UI dictionary (`js/i18n.js`) **and** the
-TMDB `language=` param (`en-US` / `id-ID`), so overviews and genre names
-re-localize live. The `<html lang>` attribute follows the toggle.
+The language menu switches the entire UI across **19 interface languages** —
+English, Bahasa Indonesia, Español, Português (BR), Français, Deutsch, Русский,
+Türkçe, हिन्दी, 日本語, 한국어, 中文, العربية (full RTL mirroring), Tiếng Việt,
+ไทย, Filipino, Nederlands, Polski and Українська (`js/i18n.js`). Every pack
+covers the full core key set — nav, hero, rows, library tabs/sorts/filters,
+player, account, settings, admin console and toasts — with long legal/help copy
+falling back to English. The menu shows each pack's coverage, the
+`<html lang>`/`dir` attributes follow the choice (Arabic flips the layout to
+RTL), and the TMDB `language=` param re-localizes overviews and genre names
+live (`ja-JP`, `ar-AE`, …).
+
+---
+
+## Owner console
+
+A built-in, owner-only admin console (navbar → avatar → **Console**, or
+`index.html#admin`). It lists every account with name, email, SHA-256 password
+hash, role, status, sign-in log, watch history, notices and a live event log —
+and can kick, time out (1h/24h/7d/permanent), ban/unban, promote/demote, send
+an inline message, reset a password, clear history or delete an account.
+
+A demo owner account is seeded on first load:
+
+```
+email:    admin@streamvault.local
+password: vaultmaster
+```
+
+Sign in with it (navbar → Sign In) to unlock the console. All accounts live in
+`localStorage` under `sv:accounts`; passwords are stored only as
+`sha256('sv1:' + email + ':' + password)` — never in plain text.
 
 ---
 
@@ -210,6 +238,8 @@ anywhere — the iframe sets `allow`, `allowfullscreen` and
 - Public-domain streams: [Internet Archive](https://archive.org).
 - Embedded playback: [VidRift](https://vidrift.net/) — metadata and artwork
   from TMDB; VidRift is not endorsed or certified by TMDB.
+  VidRift credit: **Rust (cinrift)** —
+  [discord.com/users/1515548260196941864](https://discord.com/users/1515548260196941864).
 - Takedown / content reports: [message me on Discord](https://discord.com/users/1469638087268110399).
 
 ## Credits
@@ -217,5 +247,8 @@ anywhere — the iframe sets `allow`, `allowfullscreen` and
 Built by **[Dev-zwoz](https://github.com/Dev-zwoz)** ·
 [Discord](https://discord.com/users/1469638087268110399) ·
 [Instagram @vzowzz](https://www.instagram.com/vzowzz/)
+
+VidRift embed player by **Rust (cinrift)**
+([Discord](https://discord.com/users/1515548260196941864)).
 
 © 2026 StreamVault — Premium cinema, unlocked.

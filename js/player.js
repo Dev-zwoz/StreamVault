@@ -5,10 +5,10 @@
    Keyboard shortcuts, resume-from-last-position, ambient glow from poster.
    ============================================================================ */
 
-import { IMG, VIDRIFT } from './config.js';
+import { IMG, VIDRIFT, CREDITS } from './config.js';
 import { t } from './i18n.js';
 import { resolveSource } from './archive.js';
-import { getSettings } from './account.js';
+import { getSettings, recordWatch } from './account.js';
 
 const POS_KEY = 'sv:positions';
 
@@ -60,29 +60,56 @@ function tintAmbient(movie) {
  * is a top-level document, so browsers let the VidRift embed play there even
  * when StreamVault itself is nested inside a preview panel or in-app browser.
  */
-function standaloneUrl(movie) {
-  const q = new URLSearchParams({ type: 'movie', id: String(movie.id) });
-  if (movie.title) q.set('title', movie.title);
+function standaloneUrl(movie, mediaType = 'movie') {
+  const q = new URLSearchParams({ type: mediaType === 'tv' ? 'tv' : 'movie', id: String(movie.id) });
+  if (mediaType === 'tv') { q.set('s', '1'); q.set('e', '1'); }
+  if (movie.title || movie.name) q.set('title', movie.title || movie.name);
   if (movie.poster_path) q.set('poster', IMG.posterSm + movie.poster_path);
   return `watch.html?${q}`;
 }
 
 const framed = () => { try { return window.self !== window.top; } catch { return true; } };
 
-/** Open the cinema player for a movie (resolves best source automatically) */
-export async function openPlayer(movie) {
+/** VidRift embed credit — Rust (cinrift) — painted once per open */
+function paintCredit() {
+  const c = document.getElementById('player-credit');
+  if (c) {
+    c.innerHTML = '';
+    const a = document.createElement('a');
+    a.href = CREDITS.vidrift.url;
+    a.target = '_blank';
+    a.rel = 'noopener noreferrer';
+    a.textContent = `${t('player.embedBy')} ${CREDITS.vidrift.label} — ${CREDITS.vidrift.author}`;
+    c.appendChild(a);
+  }
+  const f = document.getElementById('footer-vidrift-credit');
+  if (f && !f.textContent) {
+    f.innerHTML = '';
+    const a = document.createElement('a');
+    a.href = CREDITS.vidrift.url;
+    a.target = '_blank';
+    a.rel = 'noopener noreferrer';
+    a.textContent = `${t('player.embedBy')} ${CREDITS.vidrift.label} — ${CREDITS.vidrift.author}`;
+    f.appendChild(a);
+  }
+}
+
+/** Open the cinema player for a movie or TV title (best source, automatic) */
+export async function openPlayer(movie, mediaType = 'movie') {
   const m = modal();
   currentMovieId = movie.id;
   tintAmbient(movie);
-  document.getElementById('player-title').textContent = movie.title;
+  paintCredit();
+  document.getElementById('player-title').textContent = movie.title || movie.name || '';
   document.getElementById('player-source').textContent = '';
   const sa = document.getElementById('player-standalone');
-  if (sa) sa.href = standaloneUrl(movie);
+  if (sa) sa.href = standaloneUrl(movie, mediaType);
   frame().innerHTML = '<div class="sk" style="position:absolute;inset:0"></div>';
   m.classList.add('open');
   document.body.style.overflow = 'hidden';
 
-  const src = await resolveSource(movie.id, movie.title);
+  recordWatch(movie, mediaType);
+  const src = await resolveSource(movie.id, movie.title || movie.name || '', mediaType);
   document.getElementById('player-source').textContent = src.label;
   document.getElementById('player-keys').style.display = src.type === 'mp4' ? '' : 'none';
 
@@ -101,7 +128,7 @@ export async function openPlayer(movie) {
     const saved = getPositions()[movie.id];
     if (saved && saved.t > 20) {
       video.currentTime = saved.t;
-      import('./ui.js').then(({ toast }) => toast(t('player.resume')));
+      import('./ui.js').then(({ toast }) => toast(t('toast.resume')));
     }
     // persist position every 5s
     saveTimer = setInterval(() => {
@@ -111,12 +138,16 @@ export async function openPlayer(movie) {
     // VidRift iframe — progress + resume + quality via postMessage.
     // IMPORTANT: never add a `sandbox` attribute — a sandboxed iframe cannot
     // play (per VidRift docs). referrerpolicy stays at its browser default.
+    // IMPORTANT (rule #1 of this repo): never put a `sandbox` attribute on this
+    // iframe — a sandboxed frame cannot stream (per VidRift docs it breaks the
+    // player entirely). We only grant permissions via `allow`, `allowfullscreen`
+    // and `referrerpolicy="origin"`.
     const iframe = document.createElement('iframe');
     iframe.src = src.url;
     iframe.setAttribute('allowfullscreen', '');
     iframe.setAttribute('allow', 'autoplay; fullscreen; encrypted-media; picture-in-picture');
     iframe.setAttribute('referrerpolicy', 'origin');
-    iframe.title = movie.title;
+    iframe.title = movie.title || movie.name || '';
     frame().innerHTML = '';
     frame().appendChild(iframe);
 
@@ -128,7 +159,7 @@ export async function openPlayer(movie) {
       note.innerHTML = `<p>${t('player.framed')}</p>`;
       const go = document.createElement('a');
       go.className = 'btn btn-gold';
-      go.href = standaloneUrl(movie);
+      go.href = standaloneUrl(movie, mediaType);
       go.target = '_blank';
       go.rel = 'noopener noreferrer';
       go.textContent = t('player.framedBtn');
@@ -143,7 +174,7 @@ export async function openPlayer(movie) {
     hint.innerHTML = `<span>${t('player.iframeHint')}</span>`;
     const btn = document.createElement('a');
     btn.className = 'btn btn-gold btn-sm';
-    btn.href = standaloneUrl(movie);
+    btn.href = standaloneUrl(movie, mediaType);
     btn.target = '_blank';
     btn.rel = 'noopener noreferrer';
     btn.textContent = '↗ ' + t('player.standalone');
@@ -186,6 +217,7 @@ export function openTrailer(movie, ytKey) {
   iframe.src = `https://www.youtube-nocookie.com/embed/${ytKey}?autoplay=1&rel=0`;
   iframe.allowFullscreen = true;
   iframe.allow = 'autoplay; fullscreen; encrypted-media';
+  // NOTE: deliberately NO sandbox attribute — see the comment in openPlayer.
   iframe.title = `${movie.title} trailer`;
   frame().innerHTML = '';
   frame().appendChild(iframe);

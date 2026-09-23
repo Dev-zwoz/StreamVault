@@ -140,6 +140,8 @@ export const getUpcoming = (page = 1) => movieList('/movie/upcoming', { page });
 export const getGenreList = () => tmdb('/genre/movie/list');
 export const searchMovies = (query, page = 1) => movieList('/search/movie', { query, page, include_adult: false });
 export const discover = (params) => movieList('/discover/movie', { include_adult: false, ...params });
+export const discoverTv = (params) => movieList('/discover/tv', { include_adult: false, ...params });
+export const discoverByType = (type, params) => (type === 'movie' ? discover(params) : discoverTv(params));
 
 export const getKorean = () => discover({ with_original_language: 'ko', sort_by: 'popularity.desc', 'vote_count.gte': 200 });
 export const getJapanese = () => discover({ with_original_language: 'ja', sort_by: 'popularity.desc', 'vote_count.gte': 200 });
@@ -149,7 +151,12 @@ export const getFamily = () => discover({ with_genres: '10751', sort_by: 'popula
 
 export const getMovie = (id) =>
   tmdb(`/movie/${id}`, { append_to_response: 'videos,credits,similar,recommendations,external_ids' });
+export const getShow = (id) =>
+  tmdb(`/tv/${id}`, { append_to_response: 'videos,credits,similar,recommendations,external_ids' });
+export const getTitle = (type, id) => (type === 'tv' ? getShow(id) : getMovie(id));
 export const getProviders = (id) => tmdb(`/movie/${id}/watch/providers`);
+export const getTvProviders = (id) => tmdb(`/tv/${id}/watch/providers`);
+export const getProvidersFor = (type, id) => (type === 'tv' ? getTvProviders(id) : getProviders(id));
 
 /** Fetch light details for a set of ids (used by Free Classics row offline-safe) */
 export async function getMoviesByIds(ids) {

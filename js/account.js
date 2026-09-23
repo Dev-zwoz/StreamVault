@@ -1,7 +1,9 @@
 /* ============================================================================
    StreamVault — account.js
-   Local account system (sign in / sign up), user menu, settings panel and
-   AdShield. Profiles live in localStorage — no server, no tracking.
+   Local account system (sign in / sign up), the accounts store shared with the
+   owner console (js/admin.js), the user menu with a premium avatar, settings
+   panel and notice delivery. Everything lives in localStorage — no server,
+   no tracking. Passwords are stored as SHA-256 hashes, never in plain text.
    NOTE: this is a client-side demo auth. For production wire Supabase Auth
    (see README) — the storage keys are already namespaced for migration.
    ============================================================================ */
@@ -11,13 +13,77 @@ import { toast } from './ui.js';
 
 const USER_KEY = 'sv:user';
 const SET_KEY = 'sv:settings';
+const ACCOUNTS_KEY = 'sv:accounts';
+const EVENTS_KEY = 'sv:admin-events';
+
+/** The seeded owner demo account (documented in the README). */
+export const OWNER_SEED = { name: 'Vault Owner', email: 'admin@streamvault.local', password: 'vaultmaster' };
 
 export const DEFAULT_SETTINGS = {
-  adshield: true,        // block pop-ups / pop-unders opened from this page
   reduceMotion: false,   // force-disable decorative animation
   heroRotate: true,      // auto-rotate hero backdrops
   quality: 'Auto',       // pinned VidRift rendition: Auto/1080p/720p/480p
 };
+
+// ---------------------------------------------------------------------------
+// SHA-256 (pure JS — deterministic, sync, works in every JS runtime)
+// ---------------------------------------------------------------------------
+export function sha256(ascii) {
+  const rightRotate = (v, a) => (v >>> a) | (v << (32 - a));
+  const maxWord = Math.pow(2, 32);
+  let result = '';
+  const words = [];
+  const asciiBitLength = ascii.length * 8;
+  const k = [];
+  let hash = [];
+  let primeCounter = 0;
+  const isComposite = {};
+  for (let candidate = 2; primeCounter < 64; candidate++) {
+    if (!isComposite[candidate]) {
+      for (let i = 0; i < 313; i += candidate) isComposite[i] = candidate;
+      hash[primeCounter] = (Math.pow(candidate, 0.5) * maxWord) | 0;
+      k[primeCounter++] = (Math.pow(candidate, 1 / 3) * maxWord) | 0;
+    }
+  }
+  ascii += '\x80';
+  while (ascii.length % 64 - 56) ascii += '\x00';
+  for (let i = 0; i < ascii.length; i++) {
+    const j = ascii.charCodeAt(i);
+    if (j >> 8) return ''; // UTF-8 input required
+    words[i >> 2] |= j << ((3 - i) % 4) * 8;
+  }
+  words[words.length] = ((asciiBitLength / maxWord) | 0);
+  words[words.length] = (asciiBitLength);
+  for (let j = 0; j < words.length;) {
+    const w = words.slice(j, j += 16);
+    const oldHash = hash.slice(0);
+    hash = hash.slice(0, 8);
+    for (let i = 0; i < 64; i++) {
+      const w15 = w[i - 15], w2 = w[i - 2];
+      const a = hash[0], e = hash[4];
+      const temp1 = hash[7]
+        + (rightRotate(e, 6) ^ rightRotate(e, 11) ^ rightRotate(e, 25))
+        + ((e & hash[5]) ^ ((~e) & hash[6])) + k[i]
+        + (w[i] = (i < 16) ? w[i] : (w[i - 16] + (rightRotate(w15, 7) ^ rightRotate(w15, 18) ^ (w15 >>> 3)) + w[i - 7] + (rightRotate(w2, 17) ^ rightRotate(w2, 19) ^ (w2 >>> 10))) | 0);
+      const temp2 = (rightRotate(a, 2) ^ rightRotate(a, 13) ^ rightRotate(a, 22)) + ((a & hash[1]) ^ (a & hash[2]) ^ (hash[1] & hash[2]));
+      hash = [(temp1 + temp2) | 0].concat(hash);
+      hash[4] = (hash[4] + temp1) | 0;
+    }
+    for (let i = 0; i < 8; i++) hash[i] = (hash[i] + oldHash[i]) | 0;
+  }
+  for (let i = 0; i < 8; i++) {
+    for (let j = 3; j + 1; j--) {
+      const b = (hash[i] >> (j * 8)) & 255;
+      result += ((b < 16) ? 0 : '') + b.toString(16);
+    }
+  }
+  return result;
+}
+
+/** Password hash for an account — salted with the (lowercased) email. */
+export function hashPassword(email, password) {
+  return sha256(`sv1:${String(email).toLowerCase()}:${password}`);
+}
 
 // ---------------------------------------------------------------------------
 // Storage
@@ -39,42 +105,140 @@ export function saveSettings(patch) {
 }
 
 // ---------------------------------------------------------------------------
-// AdShield — pop-up / pop-under guard
+// Accounts store (shared with the owner console)
 // ---------------------------------------------------------------------------
-// A cross-origin player iframe cannot be ad-filtered from the parent page
-// (and VidRift explicitly breaks under a sandbox attribute), but everything
-// that tries to open a window THROUGH this page gets filtered here.
-const ALLOWED_POPUP_HOSTS = [
-  'github.com', 'discord.com', 'instagram.com', 'www.instagram.com',
-  'themoviedb.org', 'www.themoviedb.org', 'justwatch.com', 'www.justwatch.com',
-  'archive.org', 'embed.vidrift.in', 'vidrift.net', 'youtube.com',
-  'www.youtube.com', 'youtube-nocookie.com', 'www.youtube-nocookie.com',
-];
-
-let blockedCount = Number(sessionStorage.getItem('sv:adblocked') || 0);
-const nativeOpen = window.open.bind(window);
-
-function hostAllowed(url) {
-  try { return ALLOWED_POPUP_HOSTS.some((h) => new URL(url, location.href).hostname.endsWith(h)); }
-  catch { return false; }
+export function getAccounts() {
+  try { return JSON.parse(localStorage.getItem(ACCOUNTS_KEY)) || {}; }
+  catch { return {}; }
+}
+export function saveAccounts(accounts) {
+  localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(accounts));
+  window.dispatchEvent(new CustomEvent('sv:accounts'));
 }
 
-export function initAdShield() {
-  window.open = function (url, ...rest) {
-    if (!getSettings().adshield) return nativeOpen(url, ...rest);
-    if (url && hostAllowed(url)) return nativeOpen(url, ...rest);
-    blockedCount++;
-    sessionStorage.setItem('sv:adblocked', String(blockedCount));
-    updateShieldBadge();
-    toast(`🛡 ${t('shield.blocked')}`);
-    return null;
+/** Seed the owner demo account on first load. Returns the store. */
+export function ensureOwnerSeed() {
+  const accounts = getAccounts();
+  const email = OWNER_SEED.email.toLowerCase();
+  if (!accounts[email]) {
+    accounts[email] = makeAccount(OWNER_SEED.name, OWNER_SEED.email, OWNER_SEED.password, 'owner');
+    saveAccounts(accounts);
+  }
+  return accounts;
+}
+
+function makeAccount(name, email, password, role = 'member') {
+  return {
+    name, email: email.toLowerCase(),
+    hash: hashPassword(email, password),
+    role,                                  // 'owner' | 'admin' | 'member'
+    status: 'active',                      // 'active' | 'banned'
+    timeoutUntil: 0,
+    createdAt: Date.now(),
+    signinLog: [],                         // [{ at, ok }]
+    history: [],                           // [{ id, title, mediaType, at }]
+    notices: [],                           // [{ msg, at, read }]
+    kickedAt: 0,
   };
-  updateShieldBadge();
 }
 
-function updateShieldBadge() {
-  const el = document.getElementById('shield-count');
-  if (el) el.textContent = String(blockedCount);
+/** Owner/admin event log (live console feed) */
+export function getEvents() {
+  try { return JSON.parse(localStorage.getItem(EVENTS_KEY)) || []; } catch { return []; }
+}
+export function logEvent(text) {
+  const events = getEvents();
+  events.unshift({ at: Date.now(), text });
+  localStorage.setItem(EVENTS_KEY, JSON.stringify(events.slice(0, 100)));
+  window.dispatchEvent(new CustomEvent('sv:admin-events'));
+}
+
+// ---------------------------------------------------------------------------
+// Sign-in / sign-up engine used by the auth view
+// ---------------------------------------------------------------------------
+export function signInAccount({ email, name, password }) {
+  const accounts = getAccounts();
+  const key = email.toLowerCase();
+  const acc = accounts[key];
+
+  if (!acc) {
+    // Forgiving demo auth: first sign-in creates the account.
+    accounts[key] = makeAccount(name || email.split('@')[0], email, password, 'member');
+    saveAccounts(accounts);
+    return { ok: true, account: accounts[key], created: true };
+  }
+  if (acc.hash !== hashPassword(email, password)) {
+    acc.signinLog.unshift({ at: Date.now(), ok: false });
+    saveAccounts(accounts);
+    return { ok: false, reason: 'badpw' };
+  }
+  if (acc.status === 'banned') return { ok: false, reason: 'banned' };
+  if (acc.timeoutUntil > Date.now()) return { ok: false, reason: 'timeout', until: acc.timeoutUntil };
+
+  acc.signinLog.unshift({ at: Date.now(), ok: true });
+  acc.signinLog = acc.signinLog.slice(0, 30);
+  if (acc.kickedAt) acc.kickedAt = 0;
+  saveAccounts(accounts);
+  return { ok: true, account: acc };
+}
+
+export function signUpAccount({ email, name, password }) {
+  const accounts = getAccounts();
+  const key = email.toLowerCase();
+  if (accounts[key]) return { ok: false, reason: 'exists' };
+  accounts[key] = makeAccount(name, email, password, 'member');
+  accounts[key].signinLog.unshift({ at: Date.now(), ok: true });
+  saveAccounts(accounts);
+  return { ok: true, account: accounts[key] };
+}
+
+/** Record a playback into the signed-in account's watch history. */
+export function recordWatch(movie, mediaType = 'movie') {
+  const user = getUser();
+  if (!user) return;
+  const accounts = getAccounts();
+  const acc = accounts[user.email?.toLowerCase()];
+  if (!acc) return;
+  acc.history = acc.history.filter((h) => h.id !== movie.id);
+  acc.history.unshift({ id: movie.id, title: movie.title || movie.name || `#${movie.id}`, mediaType, at: Date.now() });
+  acc.history = acc.history.slice(0, 50);
+  saveAccounts(accounts);
+}
+
+/**
+ * Apply admin state to the currently signed-in user on boot:
+ * bans, timeouts and kicks sign the user out with the correct toast.
+ */
+export function enforceAccountState() {
+  const user = getUser();
+  if (!user) return false;
+  const accounts = getAccounts();
+  const acc = accounts[user.email?.toLowerCase()];
+  if (!acc) return false;
+
+  if (acc.status === 'banned') {
+    signOut(true);
+    toast(`⛔ ${t('admin.bannedToast')}`);
+    return true;
+  }
+  if (acc.timeoutUntil > Date.now()) {
+    signOut(true);
+    toast(`⏳ ${t('admin.timedoutYou')}`);
+    return true;
+  }
+  if (acc.kickedAt > (acc.signinLog[0]?.at || 0)) {
+    signOut(true);
+    toast(`👢 ${t('admin.kickedYou')}`);
+    return true;
+  }
+  // deliver unread notices (messages from the owner console)
+  const unread = (acc.notices || []).filter((n) => !n.read);
+  unread.slice(0, 3).forEach((n, i) => setTimeout(() => toast(`💬 ${n.msg}`), 600 + i * 900));
+  if (unread.length) {
+    acc.notices = acc.notices.map((n) => ({ ...n, read: true }));
+    saveAccounts(accounts);
+  }
+  return false;
 }
 
 // ---------------------------------------------------------------------------
@@ -87,11 +251,10 @@ export function applyMotionSetting() {
 // ---------------------------------------------------------------------------
 // Auth view
 // ---------------------------------------------------------------------------
-const AVATAR_HUES = [46, 262, 217, 340, 152, 20];
 
-function avatarFor(name) {
-  const hue = AVATAR_HUES[(name || 'v').charCodeAt(0) % AVATAR_HUES.length];
-  return { hue, initial: (name || '?').trim()[0]?.toUpperCase() || '?' };
+/** Premium avatar — one brand gradient for everyone, square, ringed. */
+function avatarInner(initial, cls = '') {
+  return `<span class="user-avatar ${cls}" aria-hidden="true"><span class="ua-letter">${initial}</span></span>`;
 }
 
 export function renderAuthView() {
@@ -120,7 +283,7 @@ export function renderAuthView() {
             <input type="text" name="name" required minlength="2" autocomplete="name" placeholder="Zwoz">
           </label>`}
           <label class="auth-field">
-            <span>Email</span>
+            <span>${t('auth.email')}</span>
             <input type="email" name="email" required autocomplete="email" placeholder="you@vault.com">
           </label>
           <label class="auth-field">
@@ -152,19 +315,44 @@ export function renderAuthView() {
     e.preventDefault();
     const f = e.target;
     const err = view.querySelector('.auth-err');
-    const email = f.email.value.trim();
+    const fields = new FormData(f);
+    const email = String(fields.get('email') || '').trim();
+    const password = String(fields.get('password') || '');
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) { err.textContent = t('news.invalid'); shake(f); return; }
-    if (f.password.value.length < 4) { err.textContent = t('auth.shortpw'); shake(f); return; }
-    const name = signin ? email.split('@')[0] : f.name.value.trim();
-    if (!signin && name.length < 2) { err.textContent = t('auth.noname'); shake(f); return; }
+    if (password.length < 4) { err.textContent = t('auth.shortpw'); shake(f); return; }
 
-    saveUser({ name, email, ...avatarFor(name), since: Date.now() });
+    let res;
+    if (signin) {
+      const guessName = email.split('@')[0];
+      res = signInAccount({ email, name: guessName, password });
+    } else {
+      const name = String(fields.get('name') || '').trim();
+      if (name.length < 2) { err.textContent = t('auth.noname'); shake(f); return; }
+      res = signUpAccount({ email, name, password });
+    }
+
+    if (!res.ok) {
+      if (res.reason === 'badpw') err.textContent = t('auth.badpw');
+      else if (res.reason === 'exists') err.textContent = t('auth.exists');
+      else if (res.reason === 'banned') err.textContent = t('admin.bannedToast');
+      else if (res.reason === 'timeout') err.textContent = t('admin.timedoutYou');
+      shake(f);
+      return;
+    }
+
+    const acc = res.account;
+    saveUser({
+      name: acc.name, email: acc.email, role: acc.role,
+      initial: (acc.name || '?').trim()[0]?.toUpperCase() || '?',
+      since: acc.createdAt,
+    });
     // vault-unlock celebration, then go home
     const logo = view.querySelector('.auth-logo');
     logo.classList.add('unlock');
     view.querySelector('.auth-card').classList.add('auth-success');
     setTimeout(() => {
-      toast(`🔓 ${t('auth.welcomeBack')}, ${name}!`);
+      toast(`🔓 ${t('auth.welcomeBack')}, ${acc.name}!`);
+      enforceAccountState();
       renderUserArea();
       window.dispatchEvent(new CustomEvent('sv:goto', { detail: { view: 'home' } }));
     }, 700);
@@ -175,18 +363,22 @@ function shake(el) {
   el.classList.remove('shake'); void el.offsetWidth; el.classList.add('shake');
 }
 
-export function signOut() {
+export function signOut(silent = false) {
   localStorage.removeItem(USER_KEY);
   renderUserArea();
-  toast(t('auth.signedout'));
+  if (!silent) toast(t('auth.signedout'));
 }
 
 // ---------------------------------------------------------------------------
-// Navbar user area (Sign In button ⇄ avatar + dropdown)
+// Navbar user area (Sign In button ⇄ premium avatar + dropdown)
 // ---------------------------------------------------------------------------
 export function renderUserArea() {
   const slot = document.getElementById('user-area');
   const user = getUser();
+  // Console link in the navbar is owner-only
+  const navConsole = document.getElementById('nav-console');
+  if (navConsole) navConsole.hidden = user?.role !== 'owner';
+
   if (!user) {
     slot.innerHTML = `
       <button class="btn btn-ghost btn-sm user-signin" data-goto="auth">
@@ -195,19 +387,38 @@ export function renderUserArea() {
       </button>`;
     return;
   }
+
+  const roleKey = user.role === 'owner' ? 'admin.owner' : user.role === 'admin' ? 'admin.admin' : 'admin.member';
+  const accounts = getAccounts();
+  const acc = accounts[user.email?.toLowerCase()];
+  const unread = (acc?.notices || []).filter((n) => !n.read).length;
+  const since = user.since ? new Date(user.since).toLocaleDateString() : '';
+
   slot.innerHTML = `
     <div class="user-menu-wrap">
-      <button class="user-avatar" aria-haspopup="true" aria-expanded="false" style="--hue:${user.hue}">
-        <span>${user.initial}</span>
+      <button class="user-avatar-btn" aria-haspopup="true" aria-expanded="false" aria-label="${escapeAttr(user.name)}">
+        ${avatarInner(user.initial)}
+        ${unread ? '<span class="notice-dot" aria-hidden="true"></span>' : ''}
       </button>
       <div class="user-menu" role="menu">
-        <div class="um-head">
-          <div class="user-avatar sm" style="--hue:${user.hue}"><span>${user.initial}</span></div>
-          <div><b>${escape(user.name)}</b><small>${escape(user.email)}</small></div>
+        <div class="um-account-header">
+          ${avatarInner(user.initial, 'um-avatar')}
+          <div class="um-id">
+            <b>${escape(user.name)}</b>
+            <small>${escape(user.email)}</small>
+            <div class="um-meta">
+              <span class="um-role role-${user.role}">${t(roleKey)}</span>
+              ${since ? `<span class="um-since">${since}</span>` : ''}
+            </div>
+          </div>
         </div>
         <button role="menuitem" data-goto="watchlist">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 3h12v18l-6-4-6 4z"/></svg>${t('nav.watchlist')}
         </button>
+        ${user.role === 'owner' ? `
+        <button role="menuitem" data-goto="admin">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>${t('nav.console')}
+        </button>` : ''}
         <button role="menuitem" data-open-settings>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06A1.7 1.7 0 0 0 15 19.4a1.7 1.7 0 0 0-1 1.55V21a2 2 0 1 1-4 0v-.09A1.7 1.7 0 0 0 9 19.4a1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-1.55-1H3a2 2 0 1 1 0-4h.09A1.7 1.7 0 0 0 4.6 9a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-1.55V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1 1.51 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.4 9a1.7 1.7 0 0 0 1.55 1H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.51 1z"/></svg>${t('settings.title')}
         </button>
@@ -219,17 +430,18 @@ export function renderUserArea() {
     </div>`;
 
   const wrap = slot.querySelector('.user-menu-wrap');
-  const avatar = slot.querySelector('.user-avatar');
-  avatar.addEventListener('click', (e) => {
+  const btn = slot.querySelector('.user-avatar-btn');
+  btn.addEventListener('click', (e) => {
     e.stopPropagation();
     const open = wrap.classList.toggle('open');
-    avatar.setAttribute('aria-expanded', String(open));
+    btn.setAttribute('aria-expanded', String(open));
   });
   document.addEventListener('click', () => wrap.classList.remove('open'));
-  slot.querySelector('[data-signout]').addEventListener('click', signOut);
+  slot.querySelector('[data-signout]').addEventListener('click', () => signOut());
 }
 
 function escape(s) { return String(s ?? '').replace(/</g, '&lt;'); }
+function escapeAttr(s) { return escape(s).replace(/"/g, '&quot;'); }
 
 // ---------------------------------------------------------------------------
 // Settings modal
@@ -247,14 +459,6 @@ export function openSettings() {
         <button class="modal-close" data-close aria-label="Close" style="position:static;margin:0">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M18 6 6 18M6 6l12 12"/></svg>
         </button>
-      </div>
-
-      <div class="setting-row">
-        <div>
-          <b>🛡 AdShield</b>
-          <small>${t('settings.adshieldDesc')} <span class="gold" id="shield-inline">${sessionStorage.getItem('sv:adblocked') || 0} ${t('settings.blocked')}</span></small>
-        </div>
-        <button class="switch ${s.adshield ? 'on' : ''}" data-set="adshield" role="switch" aria-checked="${s.adshield}"><span></span></button>
       </div>
 
       <div class="setting-row">
@@ -307,7 +511,7 @@ export function openSettings() {
   modal.querySelector('[data-cleardata]').addEventListener('click', () => {
     ['sv:watchlist', 'sv:positions', 'sv:user', 'sv:settings'].forEach((k) => localStorage.removeItem(k));
     sessionStorage.clear();
-    toast(t('settings.cleared'));
+    toast(t('settings.cleared'));  // the correct message for clearing local data
     closeSettings();
     renderUserArea();
   });
