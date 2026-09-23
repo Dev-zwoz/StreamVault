@@ -1,0 +1,219 @@
+/* ============================================================================
+   StreamVault — i18n.js
+   EN / ID dictionary + language switching. The chosen language also drives
+   TMDB's `language=` param so overviews switch too.
+   ============================================================================ */
+
+const DICT = {
+  en: {
+    'nav.home': 'Home', 'nav.movies': 'Movies', 'nav.classics': 'Free Classics',
+    'nav.genres': 'Genres', 'nav.trending': 'Trending', 'nav.watchlist': 'Watchlist',
+    'nav.about': 'About', 'nav.cta': 'Start Watching — Free',
+    'nav.search': 'Search movies…',
+    'hero.title': 'Premium cinema, unlocked.',
+    'hero.sub': 'Thousands of movies in HD. No subscription, no credit card — just press play. Your vault of endless movies is open.',
+    'hero.watch': 'Watch Now', 'hero.browse': 'Browse Library',
+    'hero.badge1': 'No subscription', 'hero.badge2': 'No credit card',
+    'hero.badge3': 'HD streaming', 'hero.badge4': 'Bahasa Indonesia subtitles',
+    'row.trending': 'Trending Now', 'row.classics': 'Free Classics — Playable Now',
+    'row.popular': 'Popular', 'row.top': 'Top Rated', 'row.now': 'Now Playing',
+    'row.upcoming': 'Upcoming', 'row.korean': 'Korean Cinema', 'row.japanese': 'Japanese Cinema',
+    'row.indo': 'Film Indonesia Terbaik', 'row.hollywood': 'Hollywood Blockbusters',
+    'row.family': 'Family Night',
+    'genres.title': 'Browse by Genre', 'genres.sub': 'Fifteen worlds. Pick a door.',
+    'movies.title': 'The Library', 'movies.sub': 'Every title in the vault — filter, sort, dig deep.',
+    'movies.sort.popularity': 'Popularity', 'movies.sort.rating': 'Rating',
+    'movies.sort.newest': 'Newest', 'movies.sort.az': 'A–Z',
+    'movies.filter.genre': 'All genres', 'movies.filter.year': 'Any year',
+    'movies.filter.playable': 'Playable now', 'movies.load': 'Load more',
+    'why.title': 'Why StreamVault', 'why.sub': 'Built like a premium service. Priced like a public library.',
+    'why.1t': 'Thousands of titles', 'why.1d': 'A vault that never runs dry — new films surface every week.',
+    'why.2t': 'HD & Full HD', 'why.2d': 'Crisp adaptive streams that step up when your connection does.',
+    'why.3t': 'Global cinema', 'why.3d': 'Hollywood, Korea, Japan, Indonesia — one vault, every border open.',
+    'why.4t': 'Smart discovery', 'why.4d': 'Trending, similar and recommended rows that actually get you.',
+    'why.5t': 'Multi-language subtitles', 'why.5d': 'Subtitles in 30+ languages, including Bahasa Indonesia.',
+    'why.6t': 'Fast & lightweight', 'why.6d': 'No app, no login wall, no bloat. The vault opens in seconds.',
+    'stats.titles': 'titles', 'stats.genres': 'genres', 'stats.countries': 'countries', 'stats.fees': 'subscription fees',
+    'how.title': 'How It Works', 'how.1t': 'Open the vault', 'how.1d': 'No account, no forms. The door is already unlocked.',
+    'how.2t': 'Pick a movie', 'how.2d': 'Browse rows, genres and search until something stares back.',
+    'how.3t': 'Press play', 'how.3d': 'Instant HD streaming with subtitles. That is the whole ritual.',
+    'about.title': 'The Vault Is Open',
+    'about.body': "StreamVault was built on a simple belief: great movies shouldn't be locked behind a paywall. While other platforms keep raising prices and splitting their libraries, we're doing the opposite — bringing premium entertainment to everyone, for free. Supported by light, non-intrusive advertising so the movies stay free for everyone.",
+    'about.built': 'Built by',
+    'faq.title': 'Straight Answers',
+    'faq.q1': 'Is it really free?', 'faq.a1': 'Yes — completely. StreamVault is supported by light, non-intrusive advertising. No subscription, no trial that quietly becomes a charge, no credit card, ever.',
+    'faq.q2': 'Do I need an account?', 'faq.a2': 'No. Your watchlist and resume positions are stored locally in your browser. Accounts may arrive later as an optional extra — never a requirement.',
+    'faq.q3': 'What devices are supported?', 'faq.a3': 'Anything with a modern browser: phones, tablets, laptops, desktops and smart TVs with a browser. The player is fully responsive and supports fullscreen everywhere.',
+    'faq.q4': 'Are there ads?', 'faq.a4': 'A single light ad on public streams — that is what pays for the bandwidth and keeps the vault free. No pop-up storms, no autoplaying audio banners.',
+    'faq.q5': 'Are Indonesian subtitles available?', 'faq.a5': 'Yes. The player picks up subtitles in 30+ languages automatically per title, including Bahasa Indonesia, with size, colour and timing controls.',
+    'faq.q6': 'Which movies can I watch in full?', 'faq.a6': 'Titles wearing the gold "Play Free" badge are verified public-domain classics streamed from the Internet Archive, plus everything the embedded player carries. Everything else links out to legal providers via the Where to Watch panel.',
+    'faq.q7': 'How do I report a content issue?', 'faq.a7': 'Takedown requests and content reports reach a human directly.',
+    'faq.discord': 'Message me on Discord',
+    'news.title': 'New in the vault, first in your inbox',
+    'news.sub': 'One email a week. New free classics, zero spam.',
+    'news.placeholder': 'your@email.com', 'news.cta': 'Notify me',
+    'news.ok': "You're on the list. Welcome to the vault.",
+    'news.invalid': 'That email address does not look valid.',
+    'news.disposable': 'Disposable addresses are not accepted.',
+    'modal.watchlist.add': 'Add to Watchlist', 'modal.watchlist.remove': 'In Watchlist',
+    'modal.trailer': 'Trailer', 'modal.play': 'Play Free', 'modal.playvr': 'Play in HD',
+    'modal.where': 'Where to Watch', 'modal.director': 'Director', 'modal.cast': 'Top Cast',
+    'modal.similar': 'More Like This', 'modal.nowhere': 'No streaming providers listed for this region yet.',
+    'modal.justwatch': 'Powered by JustWatch', 'modal.region': 'Region',
+    'watchlist.title': 'Your Watchlist', 'watchlist.sub': 'Saved locally in this browser — no account needed.',
+    'watchlist.empty.t': 'Your vault shelf is empty', 'watchlist.empty.d': 'Tap the + on any movie card and it will wait for you here.',
+    'watchlist.browse': 'Browse movies',
+    'toast.added': 'Added to Watchlist', 'toast.removed': 'Removed from Watchlist',
+    'player.resume': 'Resumed from where you left off',
+    'badge.offline': 'Offline mode', 'badge.keyinvalid': 'TMDB key invalid — check config.js',
+    'row.top10': 'Top 10 This Week',
+    'auth.welcome': 'Welcome back to the vault', 'auth.welcomeSub': 'Sign in and pick up right where you left off.',
+    'auth.create': 'Forge your vault key', 'auth.createSub': 'One key. Every movie. Still free, forever.',
+    'auth.signin': 'Sign In', 'auth.signup': 'Sign Up', 'auth.name': 'Name', 'auth.password': 'Password',
+    'auth.note': 'Your profile is stored locally in this browser — no server, no tracking, no spam.',
+    'auth.shortpw': 'Password needs at least 4 characters.', 'auth.noname': 'Tell us what to call you.',
+    'auth.welcomeBack': 'Vault unlocked', 'auth.signout': 'Sign Out', 'auth.signedout': 'Signed out — the vault stays open.',
+    'settings.title': 'Settings',
+    'settings.adshieldDesc': 'Blocks pop-ups and pop-unders opened through this page.',
+    'settings.blocked': 'blocked this session',
+    'settings.quality': 'Preferred quality', 'settings.qualityDesc': 'Pins the VidRift player to a rendition.',
+    'settings.hero': 'Hero auto-rotate', 'settings.heroDesc': 'Rotate featured backdrops every 8 seconds.',
+    'settings.motion': 'Reduce motion', 'settings.motionDesc': 'Turns off parallax, tilt and decorative animation.',
+    'settings.data': 'Local data', 'settings.dataDesc': 'Watchlist, resume positions, profile and settings.',
+    'settings.clear': 'Clear all', 'settings.cleared': 'All local data cleared.',
+    'shield.blocked': 'Pop-up blocked by AdShield',
+    'player.newtab': 'Open in new tab',
+    'player.iframeHint': 'Player not loading? Some embedded previews block third-party players —',
+    'footer.tagline': 'Premium cinema, unlocked.',
+    'footer.explore': 'Explore', 'footer.genres': 'Genres', 'footer.connect': 'Connect', 'footer.legal': 'Legal',
+    'footer.terms': 'Terms', 'footer.privacy': 'Privacy', 'footer.dmca': 'Content Policy / DMCA',
+    'footer.tmdb': 'This product uses the TMDB API but is not endorsed or certified by TMDB.',
+    'footer.built': 'Built by',
+    'classics.badge': '▶ Play Free',
+    'search.none': 'Nothing in the vault matches that. Try another title.',
+    'discord.pill': 'Chat on Discord',
+  },
+  id: {
+    'nav.home': 'Beranda', 'nav.movies': 'Film', 'nav.classics': 'Klasik Gratis',
+    'nav.genres': 'Genre', 'nav.trending': 'Trending', 'nav.watchlist': 'Daftar Tonton',
+    'nav.about': 'Tentang', 'nav.cta': 'Mulai Nonton — Gratis',
+    'nav.search': 'Cari film…',
+    'hero.title': 'Sinema premium, terbuka.',
+    'hero.sub': 'Ribuan film dalam HD. Tanpa langganan, tanpa kartu kredit — tinggal tekan play. Brankas film tanpa batas milikmu sudah terbuka.',
+    'hero.watch': 'Tonton Sekarang', 'hero.browse': 'Jelajahi Koleksi',
+    'hero.badge1': 'Tanpa langganan', 'hero.badge2': 'Tanpa kartu kredit',
+    'hero.badge3': 'Streaming HD', 'hero.badge4': 'Subtitle Bahasa Indonesia',
+    'row.trending': 'Trending Sekarang', 'row.classics': 'Klasik Gratis — Bisa Diputar',
+    'row.popular': 'Populer', 'row.top': 'Rating Tertinggi', 'row.now': 'Sedang Tayang',
+    'row.upcoming': 'Segera Tayang', 'row.korean': 'Sinema Korea', 'row.japanese': 'Sinema Jepang',
+    'row.indo': 'Film Indonesia Terbaik', 'row.hollywood': 'Blockbuster Hollywood',
+    'row.family': 'Malam Keluarga',
+    'genres.title': 'Jelajah per Genre', 'genres.sub': 'Lima belas dunia. Pilih pintumu.',
+    'movies.title': 'Perpustakaan', 'movies.sub': 'Semua judul di brankas — filter, urutkan, gali dalam.',
+    'movies.sort.popularity': 'Popularitas', 'movies.sort.rating': 'Rating',
+    'movies.sort.newest': 'Terbaru', 'movies.sort.az': 'A–Z',
+    'movies.filter.genre': 'Semua genre', 'movies.filter.year': 'Semua tahun',
+    'movies.filter.playable': 'Bisa diputar', 'movies.load': 'Muat lagi',
+    'why.title': 'Kenapa StreamVault', 'why.sub': 'Dibangun seperti layanan premium. Gratis seperti perpustakaan umum.',
+    'why.1t': 'Ribuan judul', 'why.1d': 'Brankas yang tak pernah kering — film baru muncul tiap minggu.',
+    'why.2t': 'HD & Full HD', 'why.2d': 'Stream adaptif yang tajam dan naik kualitas saat koneksimu membaik.',
+    'why.3t': 'Sinema global', 'why.3d': 'Hollywood, Korea, Jepang, Indonesia — satu brankas, semua batas terbuka.',
+    'why.4t': 'Penemuan cerdas', 'why.4d': 'Baris trending, mirip, dan rekomendasi yang benar-benar memahamimu.',
+    'why.5t': 'Subtitle multibahasa', 'why.5d': 'Subtitle dalam 30+ bahasa, termasuk Bahasa Indonesia.',
+    'why.6t': 'Cepat & ringan', 'why.6d': 'Tanpa aplikasi, tanpa dinding login. Brankas terbuka dalam hitungan detik.',
+    'stats.titles': 'judul', 'stats.genres': 'genre', 'stats.countries': 'negara', 'stats.fees': 'biaya langganan',
+    'how.title': 'Cara Kerjanya', 'how.1t': 'Buka brankas', 'how.1d': 'Tanpa akun, tanpa formulir. Pintunya sudah tidak terkunci.',
+    'how.2t': 'Pilih film', 'how.2d': 'Telusuri baris, genre, dan pencarian sampai ada yang balas menatap.',
+    'how.3t': 'Tekan play', 'how.3d': 'Streaming HD instan dengan subtitle. Itu saja ritualnya.',
+    'about.title': 'Brankas Telah Terbuka',
+    'about.body': 'StreamVault dibangun atas keyakinan sederhana: film hebat tidak seharusnya dikunci di balik paywall. Saat platform lain terus menaikkan harga dan memecah koleksinya, kami melakukan sebaliknya — menghadirkan hiburan premium untuk semua orang, gratis. Didukung iklan ringan yang tidak mengganggu agar film tetap gratis untuk semua.',
+    'about.built': 'Dibuat oleh',
+    'faq.title': 'Jawaban Lugas',
+    'faq.q1': 'Benar-benar gratis?', 'faq.a1': 'Ya — sepenuhnya. StreamVault didukung iklan ringan yang tidak mengganggu. Tanpa langganan, tanpa trial yang diam-diam menagih, tanpa kartu kredit, selamanya.',
+    'faq.q2': 'Perlu akun?', 'faq.a2': 'Tidak. Daftar tonton dan posisi resume disimpan lokal di browsermu. Akun mungkin hadir nanti sebagai fitur opsional — tidak pernah jadi keharusan.',
+    'faq.q3': 'Perangkat apa yang didukung?', 'faq.a3': 'Apa pun dengan browser modern: ponsel, tablet, laptop, desktop, dan smart TV ber-browser. Pemutar sepenuhnya responsif dan mendukung layar penuh di mana saja.',
+    'faq.q4': 'Ada iklan?', 'faq.a4': 'Satu iklan ringan pada stream publik — itulah yang membayar bandwidth dan menjaga brankas tetap gratis. Tanpa badai pop-up, tanpa banner bersuara.',
+    'faq.q5': 'Ada subtitle Indonesia?', 'faq.a5': 'Ya. Pemutar mengambil subtitle dalam 30+ bahasa secara otomatis per judul, termasuk Bahasa Indonesia, dengan kontrol ukuran, warna, dan timing.',
+    'faq.q6': 'Film mana yang bisa ditonton penuh?', 'faq.a6': 'Judul dengan lencana emas "Play Free" adalah klasik domain publik terverifikasi yang di-stream dari Internet Archive, plus semua yang dibawa pemutar tersemat. Sisanya tersambung ke penyedia legal lewat panel Where to Watch.',
+    'faq.q7': 'Bagaimana melaporkan masalah konten?', 'faq.a7': 'Permintaan takedown dan laporan konten langsung sampai ke manusia.',
+    'faq.discord': 'Kirim pesan di Discord',
+    'news.title': 'Yang baru di brankas, pertama di inbox-mu',
+    'news.sub': 'Satu email per minggu. Klasik gratis baru, nol spam.',
+    'news.placeholder': 'email@kamu.com', 'news.cta': 'Beri tahu saya',
+    'news.ok': 'Kamu sudah terdaftar. Selamat datang di brankas.',
+    'news.invalid': 'Alamat email itu tampaknya tidak valid.',
+    'news.disposable': 'Alamat sekali pakai tidak diterima.',
+    'modal.watchlist.add': 'Tambah ke Daftar', 'modal.watchlist.remove': 'Di Daftar Tonton',
+    'modal.trailer': 'Trailer', 'modal.play': 'Putar Gratis', 'modal.playvr': 'Putar HD',
+    'modal.where': 'Tempat Menonton', 'modal.director': 'Sutradara', 'modal.cast': 'Pemeran Utama',
+    'modal.similar': 'Serupa dengan Ini', 'modal.nowhere': 'Belum ada penyedia streaming terdaftar untuk wilayah ini.',
+    'modal.justwatch': 'Didukung JustWatch', 'modal.region': 'Wilayah',
+    'watchlist.title': 'Daftar Tontonmu', 'watchlist.sub': 'Tersimpan lokal di browser ini — tanpa akun.',
+    'watchlist.empty.t': 'Rak brankasmu masih kosong', 'watchlist.empty.d': 'Ketuk + pada kartu film mana pun dan ia akan menunggumu di sini.',
+    'watchlist.browse': 'Jelajahi film',
+    'toast.added': 'Ditambahkan ke Daftar Tonton', 'toast.removed': 'Dihapus dari Daftar Tonton',
+    'player.resume': 'Dilanjutkan dari posisi terakhir',
+    'badge.offline': 'Mode offline', 'badge.keyinvalid': 'Kunci TMDB tidak valid — periksa config.js',
+    'row.top10': 'Top 10 Minggu Ini',
+    'auth.welcome': 'Selamat datang kembali di brankas', 'auth.welcomeSub': 'Masuk dan lanjutkan dari terakhir kali.',
+    'auth.create': 'Tempa kunci brankasmu', 'auth.createSub': 'Satu kunci. Semua film. Tetap gratis, selamanya.',
+    'auth.signin': 'Masuk', 'auth.signup': 'Daftar', 'auth.name': 'Nama', 'auth.password': 'Kata sandi',
+    'auth.note': 'Profilmu disimpan lokal di browser ini — tanpa server, tanpa pelacakan, tanpa spam.',
+    'auth.shortpw': 'Kata sandi minimal 4 karakter.', 'auth.noname': 'Beri tahu kami harus memanggilmu apa.',
+    'auth.welcomeBack': 'Brankas terbuka', 'auth.signout': 'Keluar', 'auth.signedout': 'Berhasil keluar — brankas tetap terbuka.',
+    'settings.title': 'Pengaturan',
+    'settings.adshieldDesc': 'Memblokir pop-up dan pop-under yang dibuka lewat halaman ini.',
+    'settings.blocked': 'diblokir sesi ini',
+    'settings.quality': 'Kualitas pilihan', 'settings.qualityDesc': 'Mengunci pemutar VidRift ke satu resolusi.',
+    'settings.hero': 'Rotasi hero otomatis', 'settings.heroDesc': 'Putar backdrop unggulan tiap 8 detik.',
+    'settings.motion': 'Kurangi gerakan', 'settings.motionDesc': 'Mematikan parallax, tilt, dan animasi dekoratif.',
+    'settings.data': 'Data lokal', 'settings.dataDesc': 'Daftar tonton, posisi resume, profil, dan pengaturan.',
+    'settings.clear': 'Hapus semua', 'settings.cleared': 'Semua data lokal dihapus.',
+    'shield.blocked': 'Pop-up diblokir AdShield',
+    'player.newtab': 'Buka di tab baru',
+    'player.iframeHint': 'Pemutar tidak muncul? Beberapa pratinjau tersemat memblokir pemutar pihak ketiga —',
+    'footer.tagline': 'Sinema premium, terbuka.',
+    'footer.explore': 'Jelajah', 'footer.genres': 'Genre', 'footer.connect': 'Terhubung', 'footer.legal': 'Legal',
+    'footer.terms': 'Ketentuan', 'footer.privacy': 'Privasi', 'footer.dmca': 'Kebijakan Konten / DMCA',
+    'footer.tmdb': 'Produk ini menggunakan API TMDB tetapi tidak didukung atau disertifikasi oleh TMDB.',
+    'footer.built': 'Dibuat oleh',
+    'classics.badge': '▶ Putar Gratis',
+    'search.none': 'Tidak ada yang cocok di brankas. Coba judul lain.',
+    'discord.pill': 'Ngobrol di Discord',
+  },
+};
+
+/** Genre display names per language */
+export const GENRE_NAMES = {
+  en: { action: 'Action', adventure: 'Adventure', animation: 'Animation', comedy: 'Comedy', crime: 'Crime', documentary: 'Documentary', drama: 'Drama', family: 'Family', fantasy: 'Fantasy', horror: 'Horror', mystery: 'Mystery', romance: 'Romance', scifi: 'Sci-Fi', thriller: 'Thriller', war: 'War' },
+  id: { action: 'Aksi', adventure: 'Petualangan', animation: 'Animasi', comedy: 'Komedi', crime: 'Kriminal', documentary: 'Dokumenter', drama: 'Drama', family: 'Keluarga', fantasy: 'Fantasi', horror: 'Horor', mystery: 'Misteri', romance: 'Romansa', scifi: 'Fiksi Ilmiah', thriller: 'Thriller', war: 'Perang' },
+};
+
+let current = localStorage.getItem('sv:lang') || 'en';
+
+export function getLang() { return current; }
+export function tmdbLang() { return current === 'id' ? 'id-ID' : 'en-US'; }
+
+export function t(key) {
+  return (DICT[current] && DICT[current][key]) || DICT.en[key] || key;
+}
+
+/** Apply translations to every [data-i18n] node; supports placeholder attr */
+export function applyI18n(root = document) {
+  root.querySelectorAll('[data-i18n]').forEach((el) => {
+    el.textContent = t(el.dataset.i18n);
+  });
+  root.querySelectorAll('[data-i18n-ph]').forEach((el) => {
+    el.setAttribute('placeholder', t(el.dataset.i18nPh));
+  });
+  document.documentElement.lang = current;
+}
+
+/** Switch language and notify the app (re-renders live data) */
+export function setLang(lang) {
+  if (lang === current) return;
+  current = lang;
+  localStorage.setItem('sv:lang', lang);
+  applyI18n();
+  window.dispatchEvent(new CustomEvent('sv:langchange', { detail: { lang } }));
+}

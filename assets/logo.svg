@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- ============================================================================
+  StreamVault — brand mark
+  A bank-vault door seen head-on: the hub of the vault wheel is a play triangle,
+  spokes radiate to the outer ring. Metallic gold gradient with highlight sweep.
+  Works from 24px to 512px. All variants included as <symbol>s.
+============================================================================ -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="StreamVault logo">
+  <defs>
+    <linearGradient id="svGold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F5C518"/>
+      <stop offset="55%" stop-color="#E8B912"/>
+      <stop offset="100%" stop-color="#D4AF37"/>
+    </linearGradient>
+    <linearGradient id="svSheen" x1="0%" y1="0%" x2="100%" y2="60%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity=".55"/>
+      <stop offset="35%" stop-color="#FFFFFF" stop-opacity="0"/>
+    </linearGradient>
+    <radialGradient id="svGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#F5C518" stop-opacity=".28"/>
+      <stop offset="100%" stop-color="#F5C518" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- background plate -->
+  <rect width="512" height="512" rx="96" fill="#0B0B0F"/>
+  <circle cx="256" cy="256" r="238" fill="url(#svGlow)"/>
+
+  <!-- vault door outer ring -->
+  <circle cx="256" cy="256" r="212" fill="none" stroke="url(#svGold)" stroke-width="22"/>
+  <!-- ring bolts -->
+  <g fill="url(#svGold)">
+    <circle cx="256" cy="44"  r="11"/><circle cx="256" cy="468" r="11"/>
+    <circle cx="44"  cy="256" r="11"/><circle cx="468" cy="256" r="11"/>
+    <circle cx="106" cy="106" r="11"/><circle cx="406" cy="106" r="11"/>
+    <circle cx="106" cy="406" r="11"/><circle cx="406" cy="406" r="11"/>
+  </g>
+
+  <!-- vault wheel: inner ring + spokes (this group rotates in the animated logo) -->
+  <g>
+    <circle cx="256" cy="256" r="150" fill="none" stroke="url(#svGold)" stroke-width="14"/>
+    <g stroke="url(#svGold)" stroke-width="18" stroke-linecap="round">
+      <line x1="256" y1="106" x2="256" y2="176"/>
+      <line x1="256" y1="336" x2="256" y2="406"/>
+      <line x1="106" y1="256" x2="176" y2="256"/>
+      <line x1="336" y1="256" x2="406" y2="256"/>
+      <line x1="150" y1="150" x2="199" y2="199"/>
+      <line x1="313" y1="313" x2="362" y2="362"/>
+      <line x1="150" y1="362" x2="199" y2="313"/>
+      <line x1="313" y1="199" x2="362" y2="150"/>
+    </g>
+  </g>
+
+  <!-- hub: play-button triangle -->
+  <circle cx="256" cy="256" r="84" fill="#15151C" stroke="url(#svGold)" stroke-width="10"/>
+  <path d="M232 208 L316 256 L232 304 Z" fill="url(#svGold)"/>
+  <!-- highlight sweep -->
+  <circle cx="256" cy="256" r="212" fill="none" stroke="url(#svSheen)" stroke-width="22"/>
+</svg>

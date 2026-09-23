@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>StreamVault — Free Premium Movies in HD</title>
+  <meta name="description" content="Stream thousands of premium movies in HD for free. No subscription, no credit card, no hassle. StreamVault — premium cinema, unlocked.">
+  <meta name="author" content="Dev-zwoz">
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="StreamVault">
+  <meta property="og:title" content="StreamVault — Free Premium Movies in HD">
+  <meta property="og:description" content="Premium cinema, unlocked. Thousands of movies in HD — free, forever.">
+  <meta property="og:image" content="assets/logo.svg">
+
+  <!-- Twitter card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="StreamVault — Free Premium Movies in HD">
+  <meta name="twitter:description" content="Premium cinema, unlocked. Thousands of movies in HD — free, forever.">
+
+  <!-- SVG favicon (data URI, mini vault mark) -->
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='96' fill='%230B0B0F'/%3E%3Ccircle cx='256' cy='256' r='206' fill='none' stroke='%23F5C518' stroke-width='30'/%3E%3Ccircle cx='256' cy='256' r='128' fill='none' stroke='%23D4AF37' stroke-width='22'/%3E%3Cpath d='M256 74v56M256 382v56M74 256h56M382 256h56M127 127l40 40M345 345l40 40M127 385l40-40M345 167l40-40' stroke='%23F5C518' stroke-width='24' stroke-linecap='round'/%3E%3Cpath d='M226 200l88 56-88 56z' fill='%23F5C518'/%3E%3C/svg%3E">
+
+  <!-- Fonts: geometric heading + clean body, with system fallbacks in CSS -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap">
+
+  <link rel="stylesheet" href="styles/base.css">
+  <link rel="stylesheet" href="styles/components.css">
+  <link rel="stylesheet" href="styles/animations.css">
+
+  <!-- JSON-LD -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "StreamVault",
+    "alternateName": "Premium cinema, unlocked.",
+    "description": "Stream thousands of premium movies in HD for free. No subscription, no credit card, no hassle.",
+    "inLanguage": ["en", "id"],
+    "author": {
+      "@type": "Person",
+      "name": "Dev-zwoz",
+      "sameAs": [
+        "https://github.com/Dev-zwoz",
+        "https://discord.com/users/1469638087268110399",
+        "https://www.instagram.com/vzowzz/"
+      ]
+    }
+  }
+  </script>
+</head>
+<body>
+
+  <!-- =============================================== SVG defs shared by all logo instances -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <defs>
+      <linearGradient id="gGold" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#F5C518"/><stop offset="55%" stop-color="#E8B912"/><stop offset="100%" stop-color="#D4AF37"/>
+      </linearGradient>
+      <linearGradient id="gSheen" x1="0%" y1="0%" x2="100%" y2="60%">
+        <stop offset="0%" stop-color="#FFF" stop-opacity=".5"/><stop offset="35%" stop-color="#FFF" stop-opacity="0"/>
+      </linearGradient>
+      <!-- Vault mark: outer ring + rotatable wheel + play-triangle hub -->
+      <symbol id="sv-mark" viewBox="0 0 512 512">
+        <g class="sv-ring">
+          <circle cx="256" cy="256" r="212" fill="none" stroke="url(#gGold)" stroke-width="26"/>
+          <g fill="url(#gGold)">
+            <circle cx="256" cy="44" r="13"/><circle cx="256" cy="468" r="13"/>
+            <circle cx="44" cy="256" r="13"/><circle cx="468" cy="256" r="13"/>
+            <circle cx="106" cy="106" r="13"/><circle cx="406" cy="106" r="13"/>
+            <circle cx="106" cy="406" r="13"/><circle cx="406" cy="406" r="13"/>
+          </g>
+        </g>
+        <g class="sv-wheel">
+          <circle cx="256" cy="256" r="150" fill="none" stroke="url(#gGold)" stroke-width="16"/>
+          <g stroke="url(#gGold)" stroke-width="20" stroke-linecap="round">
+            <line x1="256" y1="106" x2="256" y2="176"/><line x1="256" y1="336" x2="256" y2="406"/>
+            <line x1="106" y1="256" x2="176" y2="256"/><line x1="336" y1="256" x2="406" y2="256"/>
+            <line x1="150" y1="150" x2="199" y2="199"/><line x1="313" y1="313" x2="362" y2="362"/>
+            <line x1="150" y1="362" x2="199" y2="313"/><line x1="313" y1="199" x2="362" y2="150"/>
+          </g>
+        </g>
+        <circle cx="256" cy="256" r="84" fill="#15151C" stroke="url(#gGold)" stroke-width="12"/>
+        <path class="sv-tri" d="M230 206 L318 256 L230 306 Z" fill="url(#gGold)"/>
+        <circle cx="256" cy="256" r="212" fill="none" stroke="url(#gSheen)" stroke-width="26" opacity=".8"/>
+      </symbol>
+    </defs>
+  </svg>
+
+  <!-- =============================================== preloader -->
+  <div id="preloader" role="status" aria-label="Loading StreamVault">
+    <div class="pre-sweep"></div>
+    <div>
+      <svg class="pre-logo sv-logo" viewBox="0 0 512 512" aria-hidden="true"><use href="#sv-mark"/></svg>
+      <p class="pre-tag">Premium cinema, unlocked</p>
+    </div>
+  </div>
+
+  <div id="scroll-progress" aria-hidden="true"></div>
+  <div id="cursor-glow" aria-hidden="true"></div>
+
+  <!-- =============================================== navbar -->
+  <header id="navbar">
+    <a class="nav-logo sv-logo" href="#home" data-view="home" aria-label="StreamVault home">
+      <svg viewBox="0 0 512 512" aria-hidden="true"><use href="#sv-mark"/></svg>
+      <span class="nav-word">Stream<b>Vault</b></span>
+    </a>
+
+    <nav class="nav-links" aria-label="Primary">
+      <a href="#home" data-view="home" data-i18n="nav.home">Home</a>
+      <a href="#movies" data-view="movies" data-i18n="nav.movies">Movies</a>
+      <a href="#classics" data-scroll="#classics" data-i18n="nav.classics">Free Classics</a>
+      <a href="#genres" data-scroll="#genres" data-i18n="nav.genres">Genres</a>
+      <a href="#trending" data-scroll="#trending" data-i18n="nav.trending">Trending</a>
+      <a href="#watchlist" data-view="watchlist" data-i18n="nav.watchlist">Watchlist</a>
+      <a href="#about" data-scroll="#about" data-i18n="nav.about">About</a>
+    </nav>
+
+    <div class="nav-actions">
+      <div class="search-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <input class="search-input" id="search-input" type="search" data-i18n-ph="nav.search" placeholder="Search movies…" autocomplete="off" aria-label="Search movies">
+        <div class="search-results" id="search-results" role="listbox" aria-label="Search results"></div>
+      </div>
+      <div class="lang-toggle" id="lang-toggle" data-lang="en" role="group" aria-label="Language">
+        <div class="lang-pill" aria-hidden="true"></div>
+        <button data-setlang="en" class="active" aria-pressed="true">EN</button>
+        <button data-setlang="id" aria-pressed="false">ID</button>
+      </div>
+      <button class="shield-badge" data-open-settings title="AdShield" aria-label="AdShield settings">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 2 4 6v6c0 5 3.4 8.5 8 10 4.6-1.5 8-5 8-10V6z"/><path d="m9 12 2 2 4-4"/></svg>
+        <b id="shield-count">0</b>
+      </button>
+      <span id="user-area"></span>
+      <button class="btn btn-gold btn-sm btn-shimmer nav-cta" data-scroll="#classics" data-i18n="nav.cta">Start Watching — Free</button>
+    </div>
+  </header>
+
+  <div id="key-banner" role="alert">
+    <span data-i18n="badge.keyinvalid">TMDB key invalid — check config.js</span>
+    <button aria-label="Dismiss">✕</button>
+  </div>
+
+  <main>
+    <!-- =============================================== HOME VIEW -->
+    <div class="view active" id="view-home">
+
+      <!-- hero -->
+      <section id="hero" aria-label="Featured movies">
+        <div class="hero-bg" id="hero-bg"></div>
+        <div class="hero-scrim"></div>
+        <div class="hero-aurora" aria-hidden="true"></div>
+        <div class="container hero-inner">
+          <span class="hero-kicker">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4-6.2-4.6-6.2 4.6 2.4-7.4L2 9.4h7.6z"/></svg>
+            Free, forever
+          </span>
+          <h1 class="hero-title" id="hero-title" data-i18n-title>Premium cinema, unlocked.</h1>
+          <p class="hero-sub" data-i18n="hero.sub">Thousands of movies in HD. No subscription, no credit card — just press play. Your vault of endless movies is open.</p>
+          <div class="hero-ctas">
+            <button class="btn btn-gold btn-shimmer" id="hero-watch" data-magnetic>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
+              <span data-i18n="hero.watch">Watch Now</span>
+            </button>
+            <button class="btn btn-ghost" data-view="movies"><span data-i18n="hero.browse">Browse Library</span></button>
+          </div>
+          <div class="hero-badges">
+            <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><i data-i18n="hero.badge1">No subscription</i></span>
+            <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><i data-i18n="hero.badge2">No credit card</i></span>
+            <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><i data-i18n="hero.badge3">HD streaming</i></span>
+            <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><i data-i18n="hero.badge4">Bahasa Indonesia subtitles</i></span>
+          </div>
+        </div>
+        <div class="hero-meta">
+          <span id="hero-movie-title"></span>
+          <div class="hero-dots" id="hero-dots" role="tablist" aria-label="Featured movie selector"></div>
+        </div>
+      </section>
+
+      <!-- top 10 -->
+      <section class="row-section container reveal" id="top10">
+        <div class="row-head"><h2><span class="gold">#</span>&nbsp;<span data-i18n="row.top10">Top 10 This Week</span></h2></div>
+        <div class="carousel-wrap"><div class="carousel top10-carousel" id="row-top10" data-row></div></div>
+      </section>
+
+      <!-- trending -->
+      <section class="row-section container reveal" id="trending">
+        <div class="row-head"><h2 data-i18n="row.trending">Trending Now</h2></div>
+        <div class="carousel-wrap"><div class="carousel" id="row-trending" data-row></div></div>
+      </section>
+
+      <!-- free classics -->
+      <section class="row-section container reveal" id="classics">
+        <div class="row-head"><h2><span class="gold">▶</span>&nbsp;<span data-i18n="row.classics">Free Classics — Playable Now</span></h2></div>
+        <div class="carousel-wrap"><div class="carousel" id="row-classics" data-row></div></div>
+      </section>
+
+      <!-- catalogue rows -->
+      <section class="row-section container reveal"><div class="row-head"><h2 data-i18n="row.popular">Popular</h2></div><div class="carousel-wrap"><div class="carousel" id="row-popular" data-row></div></div></section>
+      <section class="row-section container reveal"><div class="row-head"><h2 data-i18n="row.top">Top Rated</h2></div><div class="carousel-wrap"><div class="carousel" id="row-top" data-row></div></div></section>
+      <section class="row-section container reveal"><div class="row-head"><h2 data-i18n="row.now">Now Playing</h2></div><div class="carousel-wrap"><div class="carousel" id="row-now" data-row></div></div></section>
+      <section class="row-section container reveal"><div class="row-head"><h2 data-i18n="row.upcoming">Upcoming</h2></div><div class="carousel-wrap"><div class="carousel" id="row-upcoming" data-row></div></div></section>
+      <section class="row-section container reveal"><div class="row-head"><h2 data-i18n="row.korean">Korean Cinema</h2></div><div class="carousel-wrap"><div class="carousel" id="row-korean" data-row></div></div></section>
+      <section class="row-section container reveal"><div class="row-head"><h2 data-i18n="row.japanese">Japanese Cinema</h2></div><div class="carousel-wrap"><div class="carousel" id="row-japanese" data-row></div></div></section>
+      <section class="row-section container reveal"><div class="row-head"><h2 data-i18n="row.indo">Film Indonesia Terbaik</h2></div><div class="carousel-wrap"><div class="carousel" id="row-indo" data-row></div></div></section>
+      <section class="row-section container reveal"><div class="row-head"><h2 data-i18n="row.hollywood">Hollywood Blockbusters</h2></div><div class="carousel-wrap"><div class="carousel" id="row-hollywood" data-row></div></div></section>
+      <section class="row-section container reveal"><div class="row-head"><h2 data-i18n="row.family">Family Night</h2></div><div class="carousel-wrap"><div class="carousel" id="row-family" data-row></div></div></section>
+
+      <!-- genres -->
+      <section class="container reveal" id="genres">
+        <div class="section-head">
+          <span class="eyebrow">15 doors</span>
+          <h2 data-i18n="genres.title">Browse by Genre</h2>
+          <p data-i18n="genres.sub">Fifteen worlds. Pick a door.</p>
+        </div>
+        <div class="genre-grid" id="genre-grid"></div>
+      </section>
+
+      <!-- why -->
+      <section class="container reveal" id="why">
+        <div class="section-head">
+          <span class="eyebrow">The pitch</span>
+          <h2 data-i18n="why.title">Why StreamVault</h2>
+          <p data-i18n="why.sub">Built like a premium service. Priced like a public library.</p>
+        </div>
+        <div class="feature-grid" id="feature-grid"></div>
+      </section>
+
+      <!-- stats -->
+      <section id="stats" class="container reveal">
+        <div class="stats-strip">
+          <div class="stat"><b data-count="10000" data-suffix="+">0</b><span data-i18n="stats.titles">titles</span></div>
+          <div class="stat"><b data-count="19">0</b><span data-i18n="stats.genres">genres</span></div>
+          <div class="stat"><b data-count="50" data-suffix="+">0</b><span data-i18n="stats.countries">countries</span></div>
+          <div class="stat"><b data-count="0">0</b><span data-i18n="stats.fees">subscription fees</span></div>
+        </div>
+      </section>
+
+      <!-- how it works -->
+      <section class="container reveal" id="how">
+        <div class="section-head">
+          <span class="eyebrow">3 steps</span>
+          <h2 data-i18n="how.title">How It Works</h2>
+        </div>
+        <div class="steps">
+          <div class="step reveal-child"><h3 data-i18n="how.1t">Open the vault</h3><p data-i18n="how.1d">No account, no forms. The door is already unlocked.</p></div>
+          <div class="step reveal-child"><h3 data-i18n="how.2t">Pick a movie</h3><p data-i18n="how.2d">Browse rows, genres and search until something stares back.</p></div>
+          <div class="step reveal-child"><h3 data-i18n="how.3t">Press play</h3><p data-i18n="how.3d">Instant HD streaming with subtitles. That is the whole ritual.</p></div>
+        </div>
+      </section>
+
+      <!-- about -->
+      <section class="container reveal" id="about">
+        <div class="about-wrap">
+          <div>
+            <span class="eyebrow">About</span>
+            <h2 data-i18n="about.title">The Vault Is Open</h2>
+            <blockquote style="margin-top:24px" data-i18n="about.body">StreamVault was built on a simple belief: great movies shouldn't be locked behind a paywall. While other platforms keep raising prices and splitting their libraries, we're doing the opposite — bringing premium entertainment to everyone, for free. Supported by light, non-intrusive advertising so the movies stay free for everyone.</blockquote>
+          </div>
+          <div class="about-card">
+            <svg class="sv-logo" width="72" height="72" viewBox="0 0 512 512" aria-hidden="true"><use href="#sv-mark"/></svg>
+            <h3 style="margin-top:16px"><span data-i18n="about.built">Built by</span> <span class="gold">Dev-zwoz</span></h3>
+            <div class="social-row" data-socials></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- FAQ -->
+      <section class="container reveal" id="faq">
+        <div class="section-head">
+          <span class="eyebrow">FAQ</span>
+          <h2 data-i18n="faq.title">Straight Answers</h2>
+        </div>
+        <div class="faq-list" id="faq-list"></div>
+      </section>
+
+      <!-- newsletter -->
+      <section class="container reveal" id="newsletter">
+        <div class="news-card">
+          <h2 data-i18n="news.title">New in the vault, first in your inbox</h2>
+          <p class="muted" style="margin-top:10px" data-i18n="news.sub">One email a week. New free classics, zero spam.</p>
+          <form class="news-form" id="news-form" novalidate>
+            <input type="email" id="news-email" data-i18n-ph="news.placeholder" placeholder="your@email.com" required aria-label="Email address">
+            <button class="btn btn-gold" type="submit"><span data-i18n="news.cta">Notify me</span></button>
+          </form>
+          <p class="news-msg" id="news-msg" aria-live="polite"></p>
+        </div>
+      </section>
+    </div>
+
+    <!-- =============================================== MOVIES VIEW -->
+    <div class="view" id="view-movies">
+      <section class="container" style="padding-top:calc(var(--nav-h) + 40px)">
+        <div class="section-head">
+          <span class="eyebrow">Library</span>
+          <h2 data-i18n="movies.title">The Library</h2>
+          <p data-i18n="movies.sub">Every title in the vault — filter, sort, dig deep.</p>
+        </div>
+        <div class="filter-bar">
+          <select id="f-genre" aria-label="Genre filter"></select>
+          <select id="f-year" aria-label="Year filter"></select>
+          <select id="f-sort" aria-label="Sort order">
+            <option value="popularity.desc" data-i18n="movies.sort.popularity">Popularity</option>
+            <option value="vote_average.desc" data-i18n="movies.sort.rating">Rating</option>
+            <option value="primary_release_date.desc" data-i18n="movies.sort.newest">Newest</option>
+            <option value="original_title.asc" data-i18n="movies.sort.az">A–Z</option>
+          </select>
+          <label class="filter-check"><input type="checkbox" id="f-playable"><span data-i18n="movies.filter.playable">Playable now</span></label>
+        </div>
+        <div class="movie-grid" id="movie-grid"></div>
+        <div class="grid-more"><button class="btn btn-ghost" id="load-more"><span data-i18n="movies.load">Load more</span></button></div>
+      </section>
+    </div>
+
+    <!-- =============================================== AUTH VIEW -->
+    <div class="view" id="view-auth" data-mode="signin"></div>
+
+    <!-- =============================================== WATCHLIST VIEW -->
+    <div class="view" id="view-watchlist">
+      <section class="container" style="padding-top:calc(var(--nav-h) + 40px)">
+        <div class="section-head">
+          <span class="eyebrow">Saved</span>
+          <h2 data-i18n="watchlist.title">Your Watchlist</h2>
+          <p data-i18n="watchlist.sub">Saved locally in this browser — no account needed.</p>
+        </div>
+        <div class="movie-grid" id="watchlist-grid"></div>
+        <div class="watchlist-empty" id="watchlist-empty" hidden>
+          <svg viewBox="0 0 200 200" fill="none" aria-hidden="true">
+            <circle cx="100" cy="100" r="78" stroke="url(#gGold)" stroke-width="7" opacity=".5"/>
+            <circle cx="100" cy="100" r="48" stroke="url(#gGold)" stroke-width="5" opacity=".7"/>
+            <path d="M100 30v22M100 148v22M30 100h22M148 100h22" stroke="url(#gGold)" stroke-width="7" stroke-linecap="round" opacity=".5"/>
+            <path d="M90 82l26 18-26 18z" fill="url(#gGold)"/>
+            <circle cx="158" cy="52" r="14" fill="#15151C" stroke="#9A9AA5" stroke-width="3"/>
+            <path d="M152 52h12M158 46v12" stroke="#9A9AA5" stroke-width="3" stroke-linecap="round"/>
+          </svg>
+          <h3 data-i18n="watchlist.empty.t">Your vault shelf is empty</h3>
+          <p data-i18n="watchlist.empty.d">Tap the + on any movie card and it will wait for you here.</p>
+          <button class="btn btn-gold" data-view="movies"><span data-i18n="watchlist.browse">Browse movies</span></button>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- =============================================== footer -->
+  <footer>
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <a class="nav-logo sv-logo" href="#home" data-view="home" aria-label="StreamVault home">
+            <svg viewBox="0 0 512 512" aria-hidden="true"><use href="#sv-mark"/></svg>
+            <span class="nav-word">Stream<b>Vault</b></span>
+          </a>
+          <p data-i18n="footer.tagline">Premium cinema, unlocked.</p>
+        </div>
+        <div class="footer-col">
+          <h4 data-i18n="footer.explore">Explore</h4>
+          <a href="#home" data-view="home" data-i18n="nav.home">Home</a>
+          <a href="#movies" data-view="movies" data-i18n="nav.movies">Movies</a>
+          <a href="#classics" data-scroll="#classics" data-i18n="nav.classics">Free Classics</a>
+          <a href="#trending" data-scroll="#trending" data-i18n="nav.trending">Trending</a>
+          <a href="#watchlist" data-view="watchlist" data-i18n="nav.watchlist">Watchlist</a>
+        </div>
+        <div class="footer-col" id="footer-genres">
+          <h4 data-i18n="footer.genres">Genres</h4>
+        </div>
+        <div class="footer-col">
+          <h4 data-i18n="footer.connect">Connect</h4>
+          <div class="social-row" data-socials style="margin-bottom:16px"></div>
+          <div class="lang-toggle" data-lang="en" role="group" aria-label="Language" style="width:max-content">
+            <div class="lang-pill" aria-hidden="true"></div>
+            <button data-setlang="en" class="active">EN</button>
+            <button data-setlang="id">ID</button>
+          </div>
+        </div>
+        <div class="footer-col">
+          <h4 data-i18n="footer.legal">Legal</h4>
+          <a href="#" data-i18n="footer.terms">Terms</a>
+          <a href="#" data-i18n="footer.privacy">Privacy</a>
+          <a href="#" data-i18n="footer.dmca">Content Policy / DMCA</a>
+        </div>
+      </div>
+
+      <div class="footer-attrib">
+        <svg class="tmdb-logo" viewBox="0 0 273.42 35.52" aria-label="TMDB"><defs><linearGradient id="tmdbGrad" x2="273.42" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#90cea1"/><stop offset=".56" stop-color="#3cbec9"/><stop offset="1" stop-color="#00b3e5"/></linearGradient></defs><path fill="url(#tmdbGrad)" d="M191.85,35.37h63.9A17.67,17.67,0,0,0,273.42,17.7h0A17.67,17.67,0,0,0,255.75,0h-63.9A17.67,17.67,0,0,0,174.18,17.7h0A17.67,17.67,0,0,0,191.85,35.37ZM10.1,35.42h7.8V6.92H28V0H0v6.9H10.1Zm28.1,0H46V8.25h.1L55.05,35.4h6L70.3,8.25h.1V35.4h7.8V0H66.45l-8.2,23.1h-.1L50,0H38.2ZM89.14.12h11.7a33.56,33.56,0,0,1,8.08,1,18.52,18.52,0,0,1,6.67,3.08,15.09,15.09,0,0,1,4.53,5.52,18.5,18.5,0,0,1,1.67,8.25,16.91,16.91,0,0,1-1.62,7.58,16.3,16.3,0,0,1-4.38,5.5,19.24,19.24,0,0,1-6.35,3.37,24.53,24.53,0,0,1-7.55,1.15H89.14Zm7.8,28.2h4a21.66,21.66,0,0,0,5-.55,10.58,10.58,0,0,0,4-1.83,8.73,8.73,0,0,0,2.67-3.34,11.9,11.9,0,0,0,1-5.08,9.87,9.87,0,0,0-1-4.52,9.17,9.17,0,0,0-2.62-3.18A11.61,11.61,0,0,0,106,8a17.06,17.06,0,0,0-4.68-.63h-4.6ZM133.09.12h13.2a32.87,32.87,0,0,1,4.63.33,12.66,12.66,0,0,1,4.17,1.3,7.94,7.94,0,0,1,3,2.72,8.34,8.34,0,0,1,1.15,4.65,7.48,7.48,0,0,1-1.67,5,9.13,9.13,0,0,1-4.43,2.82V17a10.28,10.28,0,0,1,3.18,1,8.51,8.51,0,0,1,2.45,1.85,7.79,7.79,0,0,1,1.57,2.62,9.16,9.16,0,0,1,.55,3.2,8.52,8.52,0,0,1-1.2,4.68,9.32,9.32,0,0,1-3.1,3A13.38,13.38,0,0,1,152.32,35a22.5,22.5,0,0,1-4.73.5h-14.5Zm7.8,14.15h5.65a7.65,7.65,0,0,0,1.78-.2,4.78,4.78,0,0,0,1.57-.65,3.43,3.43,0,0,0,1.13-1.2,3.63,3.63,0,0,0,.42-1.8,3.3,3.3,0,0,0-.47-1.82,3.42,3.42,0,0,0-1.23-1.13,5.77,5.77,0,0,0-1.7-.58,10.79,10.79,0,0,0-1.85-.17h-5.3Zm0,14.65h7a8.91,8.91,0,0,0,1.83-.2,4.78,4.78,0,0,0,1.67-.7,3.94,3.94,0,0,0,1.23-1.3,3.71,3.71,0,0,0,.47-1.95,3.22,3.22,0,0,0-.62-2.05,4,4,0,0,0-1.58-1.2,8.28,8.28,0,0,0-2-.55,15.85,15.85,0,0,0-2.05-.15h-5.9Z"/></svg>
+        <span data-i18n="footer.tmdb">This product uses the TMDB API but is not endorsed or certified by TMDB.</span>
+        <span><span class="gold">JustWatch</span> — <span data-i18n="modal.justwatch">Powered by JustWatch</span></span>
+      </div>
+
+      <div class="footer-bottom">
+        <span>© 2026 StreamVault</span>
+        <span><span data-i18n="footer.built">Built by</span> <a href="https://github.com/Dev-zwoz" target="_blank" rel="noopener noreferrer">Dev-zwoz</a></span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- =============================================== overlays -->
+  <div class="modal-backdrop" id="modal-backdrop"></div>
+  <div class="modal" id="movie-modal" role="dialog" aria-modal="true" aria-label="Movie details" tabindex="-1"></div>
+  <div id="settings-modal" role="dialog" aria-modal="true" aria-label="Settings"></div>
+
+  <div id="player-modal" role="dialog" aria-modal="true" aria-label="Video player">
+    <div class="player-shell">
+      <div class="player-ambient" id="player-ambient"></div>
+      <button class="player-close" id="player-close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        Esc
+      </button>
+      <div class="player-frame" id="player-frame"></div>
+      <div class="player-bar">
+        <b id="player-title"></b>
+        <div class="keys" id="player-keys">
+          <span><kbd>Space</kbd> play</span><span><kbd>←</kbd><kbd>→</kbd> ±10s</span>
+          <span><kbd>F</kbd> fullscreen</span><span><kbd>M</kbd> mute</span><span><kbd>Esc</kbd> close</span>
+        </div>
+        <span id="player-source" class="muted"></span>
+      </div>
+    </div>
+  </div>
+
+  <div id="toasts" aria-live="polite"></div>
+
+  <div id="status-badge"><span class="dot"></span><span data-i18n="badge.offline">Offline mode</span></div>
+
+  <a id="discord-pill" href="https://discord.com/users/1469638087268110399" target="_blank" rel="noopener noreferrer">
+    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.32 4.37a19.8 19.8 0 0 0-4.93-1.51 13.78 13.78 0 0 0-.64 1.28 18.27 18.27 0 0 0-5.5 0 12.64 12.64 0 0 0-.64-1.28 19.74 19.74 0 0 0-4.93 1.51C.53 9.05-.32 13.58.1 18.06a19.9 19.9 0 0 0 6.07 3.03 14.44 14.44 0 0 0 1.3-2.1 12.6 12.6 0 0 1-2.05-.98c.17-.12.34-.25.5-.38a14.05 14.05 0 0 0 12.16 0c.17.13.33.26.5.38a12.64 12.64 0 0 1-2.05.98 14.82 14.82 0 0 0 1.3 2.1 19.84 19.84 0 0 0 6.07-3.04c.5-5.18-.84-9.68-3.58-13.68ZM8.02 15.33c-1.18 0-2.16-1.08-2.16-2.42s.95-2.42 2.16-2.42 2.18 1.09 2.16 2.42c0 1.34-.95 2.42-2.16 2.42Zm7.97 0c-1.18 0-2.15-1.08-2.15-2.42s.95-2.42 2.15-2.42 2.18 1.09 2.16 2.42c0 1.34-.95 2.42-2.16 2.42Z"/></svg>
+    <span data-i18n="discord.pill">Chat on Discord</span>
+  </a>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

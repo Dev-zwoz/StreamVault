@@ -1,0 +1,112 @@
+/* ============================================================================
+   StreamVault — base.css
+   Tokens, reset, typography, layout primitives. 8px grid throughout.
+   ============================================================================ */
+
+:root {
+  /* palette */
+  --bg: #0B0B0F;
+  --surface: #15151C;
+  --surface-2: #1C1C25;
+  --gold: #F5C518;
+  --gold-deep: #D4AF37;
+  --text: #F5F5F7;
+  --muted: #9A9AA5;
+  --glow-a: #6D28D9;
+  --glow-b: #2563EB;
+  --danger: #EF4444;
+
+  /* type */
+  --font-head: 'Sora', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --font-body: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+
+  /* motion */
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --dur-fast: 200ms;
+  --dur: 320ms;
+  --dur-slow: 500ms;
+
+  /* layout */
+  --nav-h: 72px;
+  --radius: 14px;
+  --radius-lg: 22px;
+  --pad: clamp(16px, 4vw, 56px);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+img { display: block; max-width: 100%; }
+a { color: inherit; text-decoration: none; }
+button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+input, select { font: inherit; }
+ul { list-style: none; }
+
+::selection { background: rgba(245, 197, 24, .3); }
+
+/* scrollbar */
+::-webkit-scrollbar { width: 10px; height: 8px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: #2A2A35; border-radius: 8px; }
+::-webkit-scrollbar-thumb:hover { background: #3A3A48; }
+
+/* focus visibility */
+:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* typography */
+h1, h2, h3, h4 { font-family: var(--font-head); font-weight: 700; line-height: 1.15; letter-spacing: -0.02em; }
+h1 { font-size: clamp(2.4rem, 6vw, 4.5rem); }
+h2 { font-size: clamp(1.6rem, 3.4vw, 2.4rem); }
+h3 { font-size: clamp(1.15rem, 2vw, 1.4rem); }
+
+.muted { color: var(--muted); }
+.gold { color: var(--gold); }
+
+/* layout primitives */
+.container { max-width: 1440px; margin-inline: auto; padding-inline: var(--pad); }
+section { position: relative; padding-block: clamp(48px, 8vw, 96px); }
+
+.section-head { margin-bottom: 32px; }
+.section-head p { color: var(--muted); margin-top: 8px; max-width: 560px; }
+
+.eyebrow {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-size: .78rem; font-weight: 700; letter-spacing: .18em; text-transform: uppercase;
+  color: var(--gold); margin-bottom: 12px;
+}
+.eyebrow::before { content: ''; width: 24px; height: 2px; background: linear-gradient(90deg, var(--gold), transparent); }
+
+.visually-hidden {
+  position: absolute; width: 1px; height: 1px; margin: -1px;
+  clip: rect(0 0 0 0); overflow: hidden; white-space: nowrap;
+}
+
+/* views (Home / Movies / Watchlist) */
+.view { display: none; }
+.view.active { display: block; animation: viewIn var(--dur-slow) var(--ease); }
+@keyframes viewIn { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+
+/* reduced motion — kill all decorative movement, keep opacity fades */
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+}
