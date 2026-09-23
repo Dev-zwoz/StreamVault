@@ -1035,6 +1035,15 @@ footer {
   border-bottom: 1px solid rgba(245,197,24,.28);
 }
 .player-framed-note p { margin: 0; max-width: 62ch; font-size: .82rem; color: var(--text); opacity: .9; }
+.player-framed-note .framed-note-close {
+  position: absolute; top: 8px; inset-inline-end: 10px; z-index: 2;
+  width: 30px; height: 30px; border-radius: 8px; cursor: pointer;
+  background: rgba(21,21,28,.85); color: var(--text); border: 1px solid #2c2c3a;
+  font-size: 1.1rem; line-height: 1; display: grid; place-items: center;
+  transition: border-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
+}
+.player-framed-note .framed-note-close:hover { border-color: var(--gold); color: var(--gold); }
+.player-framed-note .framed-note-close:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
 
 /* ------------------------------------------------------------------ watch.html */
 .watch-page {

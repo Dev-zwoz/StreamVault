@@ -623,6 +623,14 @@ await sleep(20);
 const settingsText = doc.getElementById('settings-modal').textContent;
 check('settings modal has no AdShield switch', !/AdShield/i.test(settingsText));
 check('settings still offers quality / motion / data', /1080p/.test(settingsText) && settingsText.length > 100);
+const noticeSw = () => doc.querySelector('#settings-modal [data-set="embedNotice"]');
+check('standalone-notice toggle present & on by default', !!noticeSw()?.classList.contains('on'));
+noticeSw().click();
+await sleep(10);
+check('notice toggle turns the banner off (persisted)', account.getSettings().embedNotice === false);
+noticeSw().click();
+await sleep(10);
+check('notice toggle turns the banner back on', account.getSettings().embedNotice === true);
 doc.getElementById('settings-modal').classList.remove('open');
 
 // ---------------------------------------------------------------------------

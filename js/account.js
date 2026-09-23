@@ -22,6 +22,7 @@ export const OWNER_SEED = { name: 'Vault Owner', email: 'admin@streamvault.local
 export const DEFAULT_SETTINGS = {
   reduceMotion: false,   // force-disable decorative animation
   heroRotate: true,      // auto-rotate hero backdrops
+  embedNotice: true,     // gold “Open standalone player” banner when framed
   quality: 'Auto',       // pinned VidRift rendition: Auto/1080p/720p/480p
 };
 
@@ -472,6 +473,11 @@ export function openSettings() {
       <div class="setting-row">
         <div><b>${t('settings.hero')}</b><small>${t('settings.heroDesc')}</small></div>
         <button class="switch ${s.heroRotate ? 'on' : ''}" data-set="heroRotate" role="switch" aria-checked="${s.heroRotate}"><span></span></button>
+      </div>
+
+      <div class="setting-row">
+        <div><b>${t('settings.embedNotice')}</b><small>${t('settings.embedNoticeDesc')}</small></div>
+        <button class="switch ${s.embedNotice ? 'on' : ''}" data-set="embedNotice" role="switch" aria-checked="${s.embedNotice}"><span></span></button>
       </div>
 
       <div class="setting-row">

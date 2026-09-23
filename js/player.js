@@ -8,7 +8,7 @@
 import { IMG, VIDRIFT, CREDITS } from './config.js';
 import { t } from './i18n.js';
 import { resolveSource } from './archive.js';
-import { getSettings, recordWatch } from './account.js';
+import { getSettings, saveSettings, recordWatch } from './account.js';
 
 const POS_KEY = 'sv:positions';
 
@@ -152,11 +152,26 @@ export async function openPlayer(movie, mediaType = 'movie') {
     frame().appendChild(iframe);
 
     // Nested frames are the one environment that genuinely blocks third-party
-    // players — hand the viewer a top-level page instead.
-    if (framed()) {
+    // players — hand the viewer a top-level page instead. The banner is a
+    // Setting (Settings → “Standalone-player notice”) and its × dismisses it
+    // for good (persisted in sv:settings).
+    let framedNoteShown = false;
+    if (framed() && getSettings().embedNotice !== false) {
+      framedNoteShown = true;
       const note = document.createElement('div');
       note.className = 'player-framed-note';
-      note.innerHTML = `<p>${t('player.framed')}</p>`;
+      const close = document.createElement('button');
+      close.className = 'framed-note-close';
+      close.type = 'button';
+      close.setAttribute('aria-label', t('player.framedClose'));
+      close.title = t('player.framedClose');
+      close.textContent = '×';
+      close.addEventListener('click', () => {
+        saveSettings({ embedNotice: false }); // stays off until re-enabled in Settings
+        note.remove();
+      });
+      note.appendChild(close);
+      note.insertAdjacentHTML('beforeend', `<p>${t('player.framed')}</p>`);
       const go = document.createElement('a');
       go.className = 'btn btn-gold';
       go.href = standaloneUrl(movie, mediaType);
@@ -168,19 +183,22 @@ export async function openPlayer(movie, mediaType = 'movie') {
       frame().appendChild(note);
     }
 
-    // Escape hatch: give the viewer a one-click way out.
-    const hint = document.createElement('div');
-    hint.className = 'player-newtab-hint';
-    hint.innerHTML = `<span>${t('player.iframeHint')}</span>`;
-    const btn = document.createElement('a');
-    btn.className = 'btn btn-gold btn-sm';
-    btn.href = standaloneUrl(movie, mediaType);
-    btn.target = '_blank';
-    btn.rel = 'noopener noreferrer';
-    btn.textContent = '↗ ' + t('player.standalone');
-    hint.appendChild(btn);
-    frame().appendChild(hint);
-    setTimeout(() => hint.classList.add('show'), 4000); // only surfaces if they linger
+    // Escape hatch: give the viewer a one-click way out (skipped when the
+    // framed note is up — one gold CTA is enough).
+    if (!framedNoteShown) {
+      const hint = document.createElement('div');
+      hint.className = 'player-newtab-hint';
+      hint.innerHTML = `<span>${t('player.iframeHint')}</span>`;
+      const btn = document.createElement('a');
+      btn.className = 'btn btn-gold btn-sm';
+      btn.href = standaloneUrl(movie, mediaType);
+      btn.target = '_blank';
+      btn.rel = 'noopener noreferrer';
+      btn.textContent = '↗ ' + t('player.standalone');
+      hint.appendChild(btn);
+      frame().appendChild(hint);
+      setTimeout(() => hint.classList.add('show'), 4000); // only surfaces if they linger
+    }
 
     const saved = getPositions()[movie.id];
     iframe.addEventListener('load', () => {

@@ -224,7 +224,8 @@ watch.html?type=tv&id=1399&s=1&e=1&title=Game%20of%20Thrones
 ```
 
 It carries the source switcher (Internet Archive MP4 vs VidRift HD), resume and
-the credit line. Two entry points use it: the **↗ Standalone player** pill in the
+the credit line. The gold nested-frame banner is a setting: dismiss it with the
+**×** (persisted) or toggle **Standalone-player notice** in Settings. Two entry points use it: the **↗ Standalone player** pill in the
 cinema player, and a gold notice that appears automatically whenever the player
 detects it is running inside a nested frame. No `sandbox` attribute is used
 anywhere — the iframe sets `allow`, `allowfullscreen` and
