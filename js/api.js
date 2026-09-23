@@ -4,7 +4,7 @@
    cache with 30-min TTL, key verification, graceful offline fallback.
    ============================================================================ */
 
-import { TMDB_API_KEY, TMDB_BASE, CACHE_TTL, EMAIL_VALIDATE_API } from './config.js';
+import { TMDB_API_KEY, TMDB_BASE, CACHE_TTL, EMAIL_VALIDATE_API, BLOCKED_KEYWORDS, MATURITY_LEVELS, DEFAULT_MATURITY } from './config.js';
 import { tmdbLang } from './i18n.js';
 
 // ---------------------------------------------------------------------------
@@ -130,16 +130,45 @@ export async function movieList(path, params = {}) {
 }
 
 // ---------------------------------------------------------------------------
-// Convenience endpoints
+// Content policy (js/content.js owns the user-facing parts; api.js owns the
+// request-level enforcement so EVERY discover is covered):
+//   * without_keywords — LGBT-theme keywords are excluded site-wide
+//   * certification.lte — maturity ceiling (user setting, default teen)
+// An explicit `certification` filter (Age Rating dropdown) overrides the
+// ceiling — the user deliberately asked for that exact rating.
 // ---------------------------------------------------------------------------
+const readMaturity = () => {
+  try {
+    const s = JSON.parse(localStorage.getItem('sv:settings'));
+    return MATURITY_LEVELS.some((l) => l.id === s?.contentMaturity) ? s.contentMaturity : DEFAULT_MATURITY;
+  } catch { return DEFAULT_MATURITY; }
+};
+export function policyParams(kind = 'movie', params = {}) {
+  const p = { without_keywords: BLOCKED_KEYWORDS.join(',') };
+  const lvl = MATURITY_LEVELS.find((l) => l.id === readMaturity());
+  const max = lvl && (kind === 'tv' ? lvl.tv : lvl.movie);
+  if (max && !params.certification) {
+    p.certification_country = 'US';
+    p['certification.lte'] = max;
+  }
+  return p;
+}
+
+// ---------------------------------------------------------------------------
+// Convenience endpoints — rows go through /discover (not /movie/popular & co.)
+// so the content policy applies to home rows too.
+// ---------------------------------------------------------------------------
+const today = () => new Date().toISOString().slice(0, 10);
 export const getTrending = () => movieList('/trending/movie/week');
-export const getPopular = (page = 1) => movieList('/movie/popular', { page });
-export const getTopRated = (page = 1) => movieList('/movie/top_rated', { page });
-export const getNowPlaying = (page = 1) => movieList('/movie/now_playing', { page });
-export const getUpcoming = (page = 1) => movieList('/movie/upcoming', { page });
+export const getPopular = (page = 1) => discover({ sort_by: 'popularity.desc', page });
+export const getTopRated = (page = 1) => discover({ sort_by: 'vote_average.desc', 'vote_count.gte': 300, page });
+export const getNowPlaying = (page = 1) => discover({ sort_by: 'primary_release_date.desc', 'primary_release_date.lte': today(), page });
+export const getUpcoming = (page = 1) => discover({ sort_by: 'primary_release_date.desc', 'primary_release_date.gte': today(), page });
 export const getGenreList = () => tmdb('/genre/movie/list');
 export const searchMovies = (query, page = 1) => movieList('/search/movie', { query, page, include_adult: false });
-export const discover = (params) => movieList('/discover/movie', { include_adult: false, ...params });
+export const discover = (params = {}) => movieList('/discover/movie', { include_adult: false, ...policyParams('movie', params), ...params });
+export const discoverTv = (params = {}) => movieList('/discover/tv', { include_adult: false, ...policyParams('tv', params), ...params });
+export const discoverByType = (type, params) => (type === 'movie' ? discover(params) : discoverTv(params));
 
 export const getKorean = () => discover({ with_original_language: 'ko', sort_by: 'popularity.desc', 'vote_count.gte': 200 });
 export const getJapanese = () => discover({ with_original_language: 'ja', sort_by: 'popularity.desc', 'vote_count.gte': 200 });
@@ -149,7 +178,12 @@ export const getFamily = () => discover({ with_genres: '10751', sort_by: 'popula
 
 export const getMovie = (id) =>
   tmdb(`/movie/${id}`, { append_to_response: 'videos,credits,similar,recommendations,external_ids' });
+export const getShow = (id) =>
+  tmdb(`/tv/${id}`, { append_to_response: 'videos,credits,similar,recommendations,external_ids' });
+export const getTitle = (type, id) => (type === 'tv' ? getShow(id) : getMovie(id));
 export const getProviders = (id) => tmdb(`/movie/${id}/watch/providers`);
+export const getTvProviders = (id) => tmdb(`/tv/${id}/watch/providers`);
+export const getProvidersFor = (type, id) => (type === 'tv' ? getTvProviders(id) : getProviders(id));
 
 /** Fetch light details for a set of ids (used by Free Classics row offline-safe) */
 export async function getMoviesByIds(ids) {

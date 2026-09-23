@@ -6,7 +6,8 @@
 
 import { IMG, GENRES, SOCIAL } from './config.js';
 import { t, getLang, GENRE_NAMES } from './i18n.js';
-import { getMovie, getProviders, searchMovies, apiState } from './api.js';
+import { getMovie, getProviders, getTitle, getProvidersFor, searchMovies, apiState } from './api.js';
+import { isBlockedTitle } from './content.js';
 import { isPublicDomain } from './archive.js';
 import { openPlayer, openTrailer } from './player.js';
 
@@ -42,6 +43,7 @@ export function toggleWatchlist(movie) {
     id: movie.id, title: movie.title, poster_path: movie.poster_path,
     release_date: movie.release_date, vote_average: movie.vote_average,
     genre_ids: movie.genre_ids || (movie.genres || []).map((g) => g.id),
+    mediaType: movie.media_type || movie.mediaType || (movie.first_air_date || movie.name ? 'tv' : 'movie'),
   });
   saveWatchlist(list);
   toast(t('toast.added'));
@@ -98,11 +100,12 @@ export function movieCard(movie, opts = {}) {
   card.className = 'card' + (opts.revealChild ? ' reveal-child' : '');
   card.tabIndex = 0;
   card.dataset.id = movie.id;
+  card.dataset.mediaType = movie.media_type || movie.mediaType || (movie.first_air_date || movie.name ? 'tv' : 'movie');
   card.setAttribute('aria-label', movie.title);
 
   const year = (movie.release_date || '').slice(0, 4);
   const rating = movie.vote_average ? movie.vote_average.toFixed(1) : '–';
-  const free = isPublicDomain(movie.id);
+  const free = card.dataset.mediaType === 'movie' && isPublicDomain(movie.id);
   const chips = (movie.genre_ids || []).slice(0, 2).map(genreName).filter(Boolean);
   const listed = inWatchlist(movie.id);
 
@@ -110,7 +113,7 @@ export function movieCard(movie, opts = {}) {
     <div class="card-media">
       <img loading="lazy" alt="${escapeHtml(movie.title)} poster">
       <div class="card-badges">
-        ${free ? `<span class="badge-free">${t('classics.badge')}</span>` : '<span></span>'}
+        ${free ? `<span class="badge-free">${t('badge.playfree')}</span>` : '<span></span>'}
         <span class="badge-hd">HD</span>
       </div>
       <span class="card-rating">${starSvg}${rating}</span>
@@ -139,7 +142,7 @@ export function movieCard(movie, opts = {}) {
     const btn = e.target.closest('[data-act]');
     if (btn) {
       e.stopPropagation();
-      if (btn.dataset.act === 'play') openPlayer(movie);
+      if (btn.dataset.act === 'play') openPlayer(movie, card.dataset.mediaType);
       else {
         const added = toggleWatchlist(movie);
         btn.classList.toggle('in-list', added);
@@ -148,10 +151,10 @@ export function movieCard(movie, opts = {}) {
       }
       return;
     }
-    openMovieModal(movie.id, card);
+    openMovieModal(movie.id, card, card.dataset.mediaType);
   });
   card.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') { e.preventDefault(); openMovieModal(movie.id, card); }
+    if (e.key === 'Enter') { e.preventDefault(); openMovieModal(movie.id, card, card.dataset.mediaType); }
   });
 
   attachTilt(card);
@@ -307,7 +310,7 @@ export function renderGenreGrid(onPick) {
     tile.style.setProperty('--reveal-delay', `${(i % 5) * 60}ms`);
     tile.innerHTML = `
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round">${GENRE_ICONS[g.key]}</svg>
-      <b>${GENRE_NAMES[getLang()][g.key]}</b><span>TMDB ${g.id}</span>`;
+      <b>${GENRE_NAMES[getLang()][g.key]}</b>`;
     tile.addEventListener('click', (e) => { rippleAt(tile, e); onPick(g.id); });
     grid.appendChild(tile);
   });
@@ -424,7 +427,9 @@ export async function renderSearchResults(query) {
   box.innerHTML = '';
   if (!results.length) {
     box.innerHTML = `<div class="search-empty">${t('search.none')}</div>`;
-  } else {
+  }
+  const rendered = [];
+  {
     results.forEach((m, i) => {
       const btn = document.createElement('button');
       btn.className = 'search-result';
@@ -435,11 +440,22 @@ export async function renderSearchResults(query) {
         <img src="${m.poster_path ? IMG.posterSm + m.poster_path : gradientPoster(m.title, m.gradient)}" alt="" loading="lazy">
         <div><div class="sr-t">${escapeHtml(m.title)}</div>
         <div class="sr-m">${year || '—'} · ★ ${m.vote_average ? m.vote_average.toFixed(1) : '–'}</div></div>`;
-      btn.addEventListener('click', () => { box.classList.remove('open'); openMovieModal(m.id); });
+      btn.addEventListener('click', () => { box.classList.remove('open'); openMovieModal(m.id, null, m.media_type === 'tv' || m.first_air_date ? 'tv' : 'movie'); });
       box.appendChild(btn);
+      rendered.push({ m, btn });
     });
   }
   box.classList.add('open');
+
+  // Content policy sweep: remove LGBT-themed hits once their keywords resolve
+  // (search can't be server-filtered, so each suggestion is checked async).
+  for (const { m, btn } of rendered) {
+    isBlockedTitle('movie', m.id).then((bad) => {
+      if (!bad) return;
+      btn.remove();
+      if (!box.querySelector('.search-result')) box.innerHTML = `<div class="search-empty">${t('search.none')}</div>`;
+    });
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -447,7 +463,7 @@ export async function renderSearchResults(query) {
 // ---------------------------------------------------------------------------
 let lastFocused = null;
 
-export async function openMovieModal(id, fromCard = null) {
+export async function openMovieModal(id, fromCard = null, mediaType = 'movie') {
   const modal = document.getElementById('movie-modal');
   const backdrop = document.getElementById('modal-backdrop');
   lastFocused = document.activeElement;
@@ -474,7 +490,7 @@ export async function openMovieModal(id, fromCard = null) {
   modal.focus();
 
   let movie;
-  try { movie = await getMovie(id); }
+  try { movie = await getTitle(mediaType, id); }
   catch {
     modal.innerHTML = `<div style="display:grid;place-items:center;height:100%;padding:40px;text-align:center">
       <div><h3>Offline</h3><p class="muted" style="margin-top:8px">Full details need a TMDB connection.</p>
@@ -482,19 +498,22 @@ export async function openMovieModal(id, fromCard = null) {
     return;
   }
 
-  renderModalContent(modal, movie);
-  loadProviders(movie.id);
+  renderModalContent(modal, movie, mediaType);
+  loadProviders(movie.id, mediaType);
 }
 
-function renderModalContent(modal, movie) {
-  const year = (movie.release_date || '').slice(0, 4);
-  const runtime = movie.runtime ? `${Math.floor(movie.runtime / 60)}h ${movie.runtime % 60}m` : '';
+function renderModalContent(modal, movie, mediaType = 'movie') {
+  const year = (movie.release_date || movie.first_air_date || '').slice(0, 4);
+  const rt = mediaType === 'tv' ? (movie.episode_run_time || [])[0] : movie.runtime;
+  const runtime = rt ? `${Math.floor(rt / 60)}h ${rt % 60}m` : '';
   const score = Math.round((movie.vote_average || 0) * 10);
-  const director = (movie.credits?.crew || []).find((c) => c.job === 'Director');
+  const director = mediaType === 'tv'
+    ? (movie.created_by || [])[0]
+    : (movie.credits?.crew || []).find((c) => c.job === 'Director');
   const cast = (movie.credits?.cast || []).slice(0, 12);
   const trailer = (movie.videos?.results || []).find((v) => v.site === 'YouTube' && v.type === 'Trailer')
     || (movie.videos?.results || []).find((v) => v.site === 'YouTube');
-  const free = isPublicDomain(movie.id);
+  const free = mediaType === 'movie' && isPublicDomain(movie.id);
   const listed = inWatchlist(movie.id);
   const similar = [...(movie.similar?.results || []), ...(movie.recommendations?.results || [])]
     .filter((m, i, arr) => arr.findIndex((x) => x.id === m.id) === i && m.id !== movie.id)
@@ -564,7 +583,7 @@ function renderModalContent(modal, movie) {
 
   // actions
   modal.querySelector('.modal-close').addEventListener('click', closeMovieModal);
-  modal.querySelector('[data-act="play"]').addEventListener('click', () => openPlayer(movie));
+  modal.querySelector('[data-act="play"]').addEventListener('click', () => openPlayer(movie, mediaType));
   modal.querySelector('[data-act="wl"]').addEventListener('click', (e) => {
     const added = toggleWatchlist(movie);
     e.currentTarget.textContent = added ? '✓ ' + t('modal.watchlist.remove') : '+ ' + t('modal.watchlist.add');
@@ -581,11 +600,11 @@ function renderModalContent(modal, movie) {
   modal.scrollTop = 0;
 }
 
-async function loadProviders(id) {
+async function loadProviders(id, mediaType = 'movie') {
   const panel = document.getElementById('providers-panel');
   if (!panel) return;
   try {
-    const data = await getProviders(id);
+    const data = await getProvidersFor(mediaType, id);
     const regions = data.results || {};
     // Prefer Indonesia, fall back to US then first available region
     const regionKey = regions.ID ? 'ID' : regions.US ? 'US' : Object.keys(regions)[0];

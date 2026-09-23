@@ -59,6 +59,49 @@ export const CREDITS = {
  */
 export const LICENSED_SOURCES = {};
 
+/* ----------------------------------------------------------------------------
+   Content policy (operator settings — see legal.html#content-policy)
+   1) LGBT-themed titles are excluded site-wide. The ids below are TMDB
+      keyword ids (verified on themoviedb.org keyword pages, 2026-09) and are
+      sent as `without_keywords` on every /discover request; titles that slip
+      through (e.g. found directly via search) are blocked again at play time
+      via /movie|tv/{id}/keywords (see js/content.js).
+   2) A maturity ceiling hides titles above the chosen age rating:
+      default 'teen' (max PG-13 / TV-14); 'mature' shows everything.
+   ---------------------------------------------------------------------------- */
+export const BLOCKED_KEYWORDS = [
+  158718, // lgbt (umbrella)
+  363345, // gay (umbrella)
+  163037, // lgbt teen
+  243575, // indigenous lgbt
+  264386, // lesbian
+  290527, // transgender
+  239239, // closeted homosexual
+  240305, // gay romance
+  258533, // gay theme
+  265777, // gay relationship
+  323690, // gay sex
+  323678, // gay hardcore
+  238355, // gay pornography
+  247821, // gay youth
+  329424, // gay people
+  337701, // gay men
+  346769, // gay interest
+  41515,  // gay parent
+  11524,  // in the closet
+  300642, // queer cinema
+];
+
+/* Maturity levels: certification ceiling per endpoint (US certifications).
+   null = no ceiling (R / NC-17 / TV-MA allowed). */
+export const MATURITY_LEVELS = [
+  { id: 'all',    movie: 'G',     tv: 'TV-G' },
+  { id: 'family', movie: 'PG',    tv: 'TV-PG' },
+  { id: 'teen',   movie: 'PG-13', tv: 'TV-14' },
+  { id: 'mature', movie: null,    tv: null },
+];
+export const DEFAULT_MATURITY = 'teen';
+
 /** Genre id → name (TMDB canonical ids used across the app) */
 export const GENRES = [
   { id: 28, key: 'action' }, { id: 12, key: 'adventure' }, { id: 16, key: 'animation' },

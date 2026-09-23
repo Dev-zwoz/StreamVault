@@ -10,6 +10,10 @@
 import { CREDITS, VIDRIFT } from './config.js';
 import { t, getLang, applyI18n } from './i18n.js';
 import { listSources } from './archive.js';
+import { getSettings } from './account.js';
+import { isBlockedTitle } from './content.js';
+
+function require_settings() { return { getSettings }; }
 
 const POS_KEY = 'sv:positions';
 const el = (id) => document.getElementById(id);
@@ -133,6 +137,14 @@ function load(i) {
     if (saved && saved.t > 20) {
       iframe.contentWindow?.postMessage({ type: 'vidrift:resume', currentTime: saved.t }, VIDRIFT.origin);
     }
+    // Pin quality if the user chose one in Settings (same as the in-site player)
+    try {
+      const { getSettings } = require_settings();
+      const q = getSettings().quality;
+      if (q && q !== 'Auto') {
+        iframe.contentWindow?.postMessage({ type: 'vidrift:quality-preference', label: q }, VIDRIFT.origin);
+      }
+    } catch { /* settings unavailable in this runtime */ }
   });
   window.addEventListener('message', (e) => {
     if (e.origin !== VIDRIFT.origin) return;
@@ -148,6 +160,11 @@ function load(i) {
   paintChrome();
   if (!state.id) {
     el('watch-frame').innerHTML = `<p class="watch-empty">${t('watch.notfound')}</p>`;
+    return;
+  }
+  // Content policy: LGBT-themed titles stay excluded on the standalone page too
+  if (await isBlockedTitle(state.type, state.id)) {
+    el('watch-frame').innerHTML = `<p class="watch-empty">${t('toast.blocked')}</p>`;
     return;
   }
   try {

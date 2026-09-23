@@ -101,6 +101,7 @@
 
   <div id="scroll-progress" aria-hidden="true"></div>
   <div id="cursor-glow" aria-hidden="true"></div>
+  <div class="bg-orbs" aria-hidden="true"><i class="orb orb-a"></i><i class="orb orb-b"></i><i class="orb orb-c"></i></div>
 
   <!-- =============================================== navbar -->
   <header id="navbar">
@@ -112,11 +113,11 @@
     <nav class="nav-links" aria-label="Primary">
       <a href="#home" data-view="home" data-i18n="nav.home">Home</a>
       <a href="#movies" data-view="movies" data-i18n="nav.movies">Movies</a>
-      <a href="#classics" data-scroll="#classics" data-i18n="nav.classics">Free Classics</a>
       <a href="#genres" data-scroll="#genres" data-i18n="nav.genres">Genres</a>
       <a href="#trending" data-scroll="#trending" data-i18n="nav.trending">Trending</a>
       <a href="#watchlist" data-view="watchlist" data-i18n="nav.watchlist">Watchlist</a>
       <a href="#about" data-scroll="#about" data-i18n="nav.about">About</a>
+      <a href="#console" data-view="admin" data-i18n="nav.console" id="nav-console" hidden>Console</a>
     </nav>
 
     <div class="nav-actions">
@@ -125,17 +126,10 @@
         <input class="search-input" id="search-input" type="search" data-i18n-ph="nav.search" placeholder="Search movies…" autocomplete="off" aria-label="Search movies">
         <div class="search-results" id="search-results" role="listbox" aria-label="Search results"></div>
       </div>
-      <div class="lang-toggle" id="lang-toggle" data-lang="en" role="group" aria-label="Language">
-        <div class="lang-pill" aria-hidden="true"></div>
-        <button data-setlang="en" class="active" aria-pressed="true">EN</button>
-        <button data-setlang="id" aria-pressed="false">ID</button>
-      </div>
-      <button class="shield-badge" data-open-settings title="AdShield" aria-label="AdShield settings">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 2 4 6v6c0 5 3.4 8.5 8 10 4.6-1.5 8-5 8-10V6z"/><path d="m9 12 2 2 4-4"/></svg>
-        <b id="shield-count">0</b>
-      </button>
+      <!-- language menu — 19 packs, coverage shown per language -->
+      <div class="lang-menu-wrap" id="lang-menu-nav"></div>
       <span id="user-area"></span>
-      <button class="btn btn-gold btn-sm btn-shimmer nav-cta" data-scroll="#classics" data-i18n="nav.cta">Start Watching — Free</button>
+      <button class="btn btn-gold btn-sm btn-shimmer nav-cta" data-view="movies" data-i18n="nav.cta">Start Watching — Free</button>
     </div>
   </header>
 
@@ -156,7 +150,7 @@
         <div class="container hero-inner">
           <span class="hero-kicker">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4-6.2-4.6-6.2 4.6 2.4-7.4L2 9.4h7.6z"/></svg>
-            Free, forever
+            <i data-i18n="hero.kicker">Free, forever</i>
           </span>
           <h1 class="hero-title" id="hero-title" data-i18n-title>Premium cinema, unlocked.</h1>
           <p class="hero-sub" data-i18n="hero.sub">Thousands of movies in HD. No subscription, no credit card — just press play. Your vault of endless movies is open.</p>
@@ -171,7 +165,7 @@
             <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><i data-i18n="hero.badge1">No subscription</i></span>
             <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><i data-i18n="hero.badge2">No credit card</i></span>
             <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><i data-i18n="hero.badge3">HD streaming</i></span>
-            <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><i data-i18n="hero.badge4">Bahasa Indonesia subtitles</i></span>
+            <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><i data-i18n="hero.badge4">Subtitles in 30+ languages</i></span>
           </div>
         </div>
         <div class="hero-meta">
@@ -179,6 +173,14 @@
           <div class="hero-dots" id="hero-dots" role="tablist" aria-label="Featured movie selector"></div>
         </div>
       </section>
+
+      <!-- ticker marquee -->
+      <div class="ticker" aria-hidden="true">
+        <div class="ticker-track">
+          <span class="ticker-chunk" data-i18n="ticker.items">New films every week • HD &amp; Full HD • Public-domain classics playable now • 19 languages • No subscription, ever • Your list stays on your device</span>
+          <span class="ticker-chunk" data-i18n="ticker.items">New films every week • HD &amp; Full HD • Public-domain classics playable now • 19 languages • No subscription, ever • Your list stays on your device</span>
+        </div>
+      </div>
 
       <!-- top 10 -->
       <section class="row-section container reveal" id="top10">
@@ -190,12 +192,6 @@
       <section class="row-section container reveal" id="trending">
         <div class="row-head"><h2 data-i18n="row.trending">Trending Now</h2></div>
         <div class="carousel-wrap"><div class="carousel" id="row-trending" data-row></div></div>
-      </section>
-
-      <!-- free classics -->
-      <section class="row-section container reveal" id="classics">
-        <div class="row-head"><h2><span class="gold">▶</span>&nbsp;<span data-i18n="row.classics">Free Classics — Playable Now</span></h2></div>
-        <div class="carousel-wrap"><div class="carousel" id="row-classics" data-row></div></div>
       </section>
 
       <!-- catalogue rows -->
@@ -212,7 +208,7 @@
       <!-- genres -->
       <section class="container reveal" id="genres">
         <div class="section-head">
-          <span class="eyebrow">15 doors</span>
+          <span class="eyebrow"><i data-i18n="eyebrow.doors">15 doors</i></span>
           <h2 data-i18n="genres.title">Browse by Genre</h2>
           <p data-i18n="genres.sub">Fifteen worlds. Pick a door.</p>
         </div>
@@ -222,7 +218,7 @@
       <!-- why -->
       <section class="container reveal" id="why">
         <div class="section-head">
-          <span class="eyebrow">The pitch</span>
+          <span class="eyebrow"><i data-i18n="eyebrow.pitch">The pitch</i></span>
           <h2 data-i18n="why.title">Why StreamVault</h2>
           <p data-i18n="why.sub">Built like a premium service. Priced like a public library.</p>
         </div>
@@ -242,13 +238,14 @@
       <!-- how it works -->
       <section class="container reveal" id="how">
         <div class="section-head">
-          <span class="eyebrow">3 steps</span>
+          <span class="eyebrow"><i data-i18n="eyebrow.steps">4 steps</i></span>
           <h2 data-i18n="how.title">How It Works</h2>
         </div>
         <div class="steps">
-          <div class="step reveal-child"><h3 data-i18n="how.1t">Open the vault</h3><p data-i18n="how.1d">No account, no forms. The door is already unlocked.</p></div>
-          <div class="step reveal-child"><h3 data-i18n="how.2t">Pick a movie</h3><p data-i18n="how.2d">Browse rows, genres and search until something stares back.</p></div>
-          <div class="step reveal-child"><h3 data-i18n="how.3t">Press play</h3><p data-i18n="how.3d">Instant HD streaming with subtitles. That is the whole ritual.</p></div>
+          <div class="step reveal-child"><span class="step-no" aria-hidden="true">1</span><h3 data-i18n="how.1t">Open the door</h3><p data-i18n="how.1d">No account, no forms. The door is already unlocked.</p></div>
+          <div class="step reveal-child"><span class="step-no" aria-hidden="true">2</span><h3 data-i18n="how.2t">Pick your lane</h3><p data-i18n="how.2d">Rows, tabs, genres, search — choose how you hunt tonight.</p></div>
+          <div class="step reveal-child"><span class="step-no" aria-hidden="true">3</span><h3 data-i18n="how.3t">Press play</h3><p data-i18n="how.3d">Instant HD streaming with subtitles. That is the whole ritual.</p></div>
+          <div class="step reveal-child"><span class="step-no" aria-hidden="true">4</span><h3 data-i18n="how.4t">Keep your shelf</h3><p data-i18n="how.4d">Your watchlist and resume positions stay saved on your device.</p></div>
         </div>
       </section>
 
@@ -256,7 +253,7 @@
       <section class="container reveal" id="about">
         <div class="about-wrap">
           <div>
-            <span class="eyebrow">About</span>
+            <span class="eyebrow"><i data-i18n="eyebrow.about">About</i></span>
             <h2 data-i18n="about.title">The Vault Is Open</h2>
             <blockquote style="margin-top:24px" data-i18n="about.body">StreamVault was built on a simple belief: great movies shouldn't be locked behind a paywall. While other platforms keep raising prices and splitting their libraries, we're doing the opposite — bringing premium entertainment to everyone, for free. Supported by light, non-intrusive advertising so the movies stay free for everyone.</blockquote>
           </div>
@@ -271,7 +268,7 @@
       <!-- FAQ -->
       <section class="container reveal" id="faq">
         <div class="section-head">
-          <span class="eyebrow">FAQ</span>
+          <span class="eyebrow"><i data-i18n="eyebrow.faq">FAQ</i></span>
           <h2 data-i18n="faq.title">Straight Answers</h2>
         </div>
         <div class="faq-list" id="faq-list"></div>
@@ -280,8 +277,9 @@
       <!-- newsletter -->
       <section class="container reveal" id="newsletter">
         <div class="news-card">
+          <span class="eyebrow"><i data-i18n="eyebrow.news">Stay in the loop</i></span>
           <h2 data-i18n="news.title">New in the vault, first in your inbox</h2>
-          <p class="muted" style="margin-top:10px" data-i18n="news.sub">One email a week. New free classics, zero spam.</p>
+          <p class="muted" style="margin-top:10px" data-i18n="news.sub">One email a week. New arrivals and free picks, zero spam.</p>
           <form class="news-form" id="news-form" novalidate>
             <input type="email" id="news-email" data-i18n-ph="news.placeholder" placeholder="your@email.com" required aria-label="Email address">
             <button class="btn btn-gold" type="submit"><span data-i18n="news.cta">Notify me</span></button>
@@ -295,20 +293,44 @@
     <div class="view" id="view-movies">
       <section class="container" style="padding-top:calc(var(--nav-h) + 40px)">
         <div class="section-head">
-          <span class="eyebrow">Library</span>
+          <span class="eyebrow"><i data-i18n="eyebrow.library">Library</i></span>
           <h2 data-i18n="movies.title">The Library</h2>
           <p data-i18n="movies.sub">Every title in the vault — filter, sort, dig deep.</p>
         </div>
+        <div class="lib-tabs" id="lib-tabs" role="tablist" aria-label="Library type">
+          <button role="tab" aria-selected="true" class="active" data-tab="all" data-i18n="lib.tab.all">All</button>
+          <button role="tab" aria-selected="false" data-tab="movie" data-i18n="lib.tab.movie">Movies</button>
+          <button role="tab" aria-selected="false" data-tab="tv" data-i18n="lib.tab.tv">TV Shows</button>
+          <button role="tab" aria-selected="false" data-tab="anime" data-i18n="lib.tab.anime">Anime</button>
+          <span class="lib-pill" aria-hidden="true"></span>
+        </div>
         <div class="filter-bar">
           <select id="f-genre" aria-label="Genre filter"></select>
-          <select id="f-year" aria-label="Year filter"></select>
+          <select id="f-cert" aria-label="Age rating filter">
+            <option value="" data-i18n="movies.filter.certAny">Any rating</option>
+            <option value="G">G</option><option value="PG">PG</option><option value="PG-13">PG-13</option>
+            <option value="R">R</option><option value="NC-17">NC-17</option>
+          </select>
+          <select id="f-lang" aria-label="Language filter"></select>
+          <select id="f-score" aria-label="Minimum score filter">
+            <option value="" data-i18n="movies.filter.scoreAny">Any score</option>
+            <option value="5">5+</option><option value="6">6+</option><option value="7">7+</option>
+            <option value="8">8+</option><option value="9">9+</option>
+          </select>
+          <select id="f-year-from" aria-label="Year range start"></select>
+          <select id="f-year-to" aria-label="Year range end"></select>
           <select id="f-sort" aria-label="Sort order">
             <option value="popularity.desc" data-i18n="movies.sort.popularity">Popularity</option>
             <option value="vote_average.desc" data-i18n="movies.sort.rating">Rating</option>
             <option value="primary_release_date.desc" data-i18n="movies.sort.newest">Newest</option>
+            <option value="primary_release_date.asc" data-i18n="movies.sort.oldest">Oldest</option>
             <option value="original_title.asc" data-i18n="movies.sort.az">A–Z</option>
+            <option value="vote_count.desc" data-i18n="movies.sort.votes">Most voted</option>
+            <option value="revenue.desc" data-i18n="movies.sort.revenue">Revenue</option>
           </select>
           <label class="filter-check"><input type="checkbox" id="f-playable"><span data-i18n="movies.filter.playable">Playable now</span></label>
+          <button class="btn btn-ghost btn-sm" id="f-reset" data-i18n="movies.reset">Reset</button>
+          <span class="result-count muted" id="result-count" aria-live="polite"></span>
         </div>
         <div class="movie-grid" id="movie-grid"></div>
         <div class="grid-more"><button class="btn btn-ghost" id="load-more"><span data-i18n="movies.load">Load more</span></button></div>
@@ -318,11 +340,27 @@
     <!-- =============================================== AUTH VIEW -->
     <div class="view" id="view-auth" data-mode="signin"></div>
 
+    <!-- =============================================== ADMIN (owner) VIEW -->
+    <div class="view" id="view-admin">
+      <section class="container admin-wrap" style="padding-top:calc(var(--nav-h) + 40px)">
+        <div class="section-head">
+          <span class="eyebrow"><i data-i18n="nav.console">Console</i></span>
+          <h2 data-i18n="admin.title">Owner Console</h2>
+          <p data-i18n="admin.sub">Every account on this vault — full oversight, one switch away.</p>
+        </div>
+        <div class="admin-denied" id="admin-denied" hidden>
+          <p data-i18n="admin.ownerOnly">Owner access only.</p>
+          <button class="btn btn-gold" data-goto="auth"><span data-i18n="auth.signin">Sign In</span></button>
+        </div>
+        <div id="admin-panel" hidden></div>
+      </section>
+    </div>
+
     <!-- =============================================== WATCHLIST VIEW -->
     <div class="view" id="view-watchlist">
       <section class="container" style="padding-top:calc(var(--nav-h) + 40px)">
         <div class="section-head">
-          <span class="eyebrow">Saved</span>
+          <span class="eyebrow"><i data-i18n="eyebrow.saved">Saved</i></span>
           <h2 data-i18n="watchlist.title">Your Watchlist</h2>
           <p data-i18n="watchlist.sub">Saved locally in this browser — no account needed.</p>
         </div>
@@ -359,7 +397,6 @@
           <h4 data-i18n="footer.explore">Explore</h4>
           <a href="#home" data-view="home" data-i18n="nav.home">Home</a>
           <a href="#movies" data-view="movies" data-i18n="nav.movies">Movies</a>
-          <a href="#classics" data-scroll="#classics" data-i18n="nav.classics">Free Classics</a>
           <a href="#trending" data-scroll="#trending" data-i18n="nav.trending">Trending</a>
           <a href="#watchlist" data-view="watchlist" data-i18n="nav.watchlist">Watchlist</a>
         </div>
@@ -369,17 +406,14 @@
         <div class="footer-col">
           <h4 data-i18n="footer.connect">Connect</h4>
           <div class="social-row" data-socials style="margin-bottom:16px"></div>
-          <div class="lang-toggle" data-lang="en" role="group" aria-label="Language" style="width:max-content">
-            <div class="lang-pill" aria-hidden="true"></div>
-            <button data-setlang="en" class="active">EN</button>
-            <button data-setlang="id">ID</button>
-          </div>
+          <div class="lang-menu-wrap" id="lang-menu-foot"></div>
         </div>
         <div class="footer-col">
           <h4 data-i18n="footer.legal">Legal</h4>
-          <a href="#" data-i18n="footer.terms">Terms</a>
-          <a href="#" data-i18n="footer.privacy">Privacy</a>
-          <a href="#" data-i18n="footer.dmca">Content Policy / DMCA</a>
+          <a href="legal.html#terms" data-i18n="footer.terms">Terms</a>
+          <a href="legal.html#privacy" data-i18n="footer.privacy">Privacy</a>
+          <a href="legal.html#content-policy">Content Policy</a>
+          <a href="legal.html#dmca">DMCA</a>
         </div>
       </div>
 
@@ -387,6 +421,7 @@
         <svg class="tmdb-logo" viewBox="0 0 273.42 35.52" aria-label="TMDB"><defs><linearGradient id="tmdbGrad" x2="273.42" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#90cea1"/><stop offset=".56" stop-color="#3cbec9"/><stop offset="1" stop-color="#00b3e5"/></linearGradient></defs><path fill="url(#tmdbGrad)" d="M191.85,35.37h63.9A17.67,17.67,0,0,0,273.42,17.7h0A17.67,17.67,0,0,0,255.75,0h-63.9A17.67,17.67,0,0,0,174.18,17.7h0A17.67,17.67,0,0,0,191.85,35.37ZM10.1,35.42h7.8V6.92H28V0H0v6.9H10.1Zm28.1,0H46V8.25h.1L55.05,35.4h6L70.3,8.25h.1V35.4h7.8V0H66.45l-8.2,23.1h-.1L50,0H38.2ZM89.14.12h11.7a33.56,33.56,0,0,1,8.08,1,18.52,18.52,0,0,1,6.67,3.08,15.09,15.09,0,0,1,4.53,5.52,18.5,18.5,0,0,1,1.67,8.25,16.91,16.91,0,0,1-1.62,7.58,16.3,16.3,0,0,1-4.38,5.5,19.24,19.24,0,0,1-6.35,3.37,24.53,24.53,0,0,1-7.55,1.15H89.14Zm7.8,28.2h4a21.66,21.66,0,0,0,5-.55,10.58,10.58,0,0,0,4-1.83,8.73,8.73,0,0,0,2.67-3.34,11.9,11.9,0,0,0,1-5.08,9.87,9.87,0,0,0-1-4.52,9.17,9.17,0,0,0-2.62-3.18A11.61,11.61,0,0,0,106,8a17.06,17.06,0,0,0-4.68-.63h-4.6ZM133.09.12h13.2a32.87,32.87,0,0,1,4.63.33,12.66,12.66,0,0,1,4.17,1.3,7.94,7.94,0,0,1,3,2.72,8.34,8.34,0,0,1,1.15,4.65,7.48,7.48,0,0,1-1.67,5,9.13,9.13,0,0,1-4.43,2.82V17a10.28,10.28,0,0,1,3.18,1,8.51,8.51,0,0,1,2.45,1.85,7.79,7.79,0,0,1,1.57,2.62,9.16,9.16,0,0,1,.55,3.2,8.52,8.52,0,0,1-1.2,4.68,9.32,9.32,0,0,1-3.1,3A13.38,13.38,0,0,1,152.32,35a22.5,22.5,0,0,1-4.73.5h-14.5Zm7.8,14.15h5.65a7.65,7.65,0,0,0,1.78-.2,4.78,4.78,0,0,0,1.57-.65,3.43,3.43,0,0,0,1.13-1.2,3.63,3.63,0,0,0,.42-1.8,3.3,3.3,0,0,0-.47-1.82,3.42,3.42,0,0,0-1.23-1.13,5.77,5.77,0,0,0-1.7-.58,10.79,10.79,0,0,0-1.85-.17h-5.3Zm0,14.65h7a8.91,8.91,0,0,0,1.83-.2,4.78,4.78,0,0,0,1.67-.7,3.94,3.94,0,0,0,1.23-1.3,3.71,3.71,0,0,0,.47-1.95,3.22,3.22,0,0,0-.62-2.05,4,4,0,0,0-1.58-1.2,8.28,8.28,0,0,0-2-.55,15.85,15.85,0,0,0-2.05-.15h-5.9Z"/></svg>
         <span data-i18n="footer.tmdb">This product uses the TMDB API but is not endorsed or certified by TMDB.</span>
         <span><span class="gold">JustWatch</span> — <span data-i18n="modal.justwatch">Powered by JustWatch</span></span>
+        <span class="vidrift-credit" id="footer-vidrift-credit"></span>
       </div>
 
       <div class="footer-bottom">
@@ -419,6 +454,7 @@
           <span><kbd>F</kbd> fullscreen</span><span><kbd>M</kbd> mute</span><span><kbd>Esc</kbd> close</span>
         </div>
         <span id="player-source" class="muted"></span>
+        <span class="player-credit" id="player-credit"></span>
       </div>
     </div>
   </div>

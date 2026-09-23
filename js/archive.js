@@ -110,19 +110,21 @@ export async function listSources(tmdbId, title = '', type = 'movie', season = 1
  * Returns { type: 'mp4'|'hls'|'iframe', url, label, kind }
  *   kind: 'licensed' | 'public-domain' | 'vidrift'
  */
-export async function resolveSource(tmdbId, title = '') {
+export async function resolveSource(tmdbId, title = '', type = 'movie', season = 1, episode = 1) {
   const licensed = LICENSED_SOURCES[tmdbId] || LICENSED_SOURCES[String(tmdbId)];
   if (licensed) return { ...licensed, kind: 'licensed' };
 
-  await loadPdMap();
-  const pd = pdEntry(tmdbId);
-  if (pd) {
-    try {
-      const url = await resolveArchiveMp4(pd.archiveId, pd.file);
-      return { type: 'mp4', url, label: 'Internet Archive · Public Domain', kind: 'public-domain' };
-    } catch (e) {
-      console.warn('[StreamVault] Archive resolution failed, falling back to VidRift:', e.message);
+  if (type !== 'tv') {
+    await loadPdMap();
+    const pd = pdEntry(tmdbId);
+    if (pd) {
+      try {
+        const url = await resolveArchiveMp4(pd.archiveId, pd.file);
+        return { type: 'mp4', url, label: 'Internet Archive · Public Domain', kind: 'public-domain' };
+      } catch (e) {
+        console.warn('[StreamVault] Archive resolution failed, falling back to VidRift:', e.message);
+      }
     }
   }
-  return { type: 'iframe', url: vidriftUrl(tmdbId, title), label: 'VidRift', kind: 'vidrift' };
+  return { type: 'iframe', url: vidriftUrl(tmdbId, title, type, season, episode), label: 'VidRift', kind: 'vidrift' };
 }
