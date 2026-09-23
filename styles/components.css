@@ -683,9 +683,14 @@ footer {
 .player-frame video, .player-frame iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
 .player-bar {
   position: relative; display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  flex-wrap: wrap; /* never push chrome outside the shell on narrow screens */
   padding: 14px 6px 0; color: var(--muted); font-size: .84rem;
 }
-.player-bar b { color: var(--text); font-family: var(--font-head); }
+.player-bar b {
+  color: var(--text); font-family: var(--font-head);
+  min-width: 0; max-width: 100%;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
 .player-bar .keys { display: flex; gap: 10px; flex-wrap: wrap; }
 .player-bar kbd {
   background: var(--surface-2); border: 1px solid #2a2a38; border-radius: 5px;
@@ -784,6 +789,13 @@ footer {
   .modal-body { margin-top: -70px; }
 }
 @media (max-width: 640px) {
+  /* small-screen safety: keep buttons and player chrome inside the viewport */
+  .btn { padding: 11px 20px; font-size: .9rem; }
+  .hero-ctas { gap: 10px; margin-top: 24px; }
+  .player-shell { width: calc(100vw - 20px); height: min(62vh, 480px); }
+  .player-bar { font-size: .76rem; gap: 8px 12px; }
+  .player-bar .keys { display: none; } /* keyboard hints are useless on touch */
+  .player-credit { white-space: normal; overflow: visible; margin-inline-start: 0; }
   .user-signin span { display: none; }
   .search-input { width: 40px; padding-left: 38px; color: transparent; }
   .search-input:focus { width: min(230px, 56vw); color: var(--text); }

@@ -176,6 +176,25 @@ live (`ja-JP`, `ar-AE`, …).
 
 ---
 
+## Content policy
+
+The catalogue is filtered automatically on every request (`js/config.js` →
+`js/content.js`):
+
+- **LGBT-themed titles are excluded by operator policy** — TMDB keyword ids
+  (`lgbt`, `gay`, `lesbian`, `transgender`, …) are sent as `without_keywords`
+  on **every** `/discover` call (home rows, library, all tabs), and titles
+  reached directly (search suggestions, deep links, hero/Top-10 from trending)
+  are re-checked against `/movie|tv/{id}/keywords` and blocked at render /
+  play time.
+- **Maturity ceiling** (Settings → *Content maturity*, default **Teen**):
+  `certification.lte=PG-13 / TV-14` on every discover. Levels: All ages (G),
+  Family (PG), Teen (PG-13), Mature (no ceiling). Picking an exact Age Rating
+  in the library intentionally overrides the ceiling for that browse.
+- Full policy text: [`legal.html`](legal.html#content-policy) — alongside
+  [Terms](legal.html#terms), [Privacy](legal.html#privacy) and
+  [DMCA](legal.html#dmca), all linked from the footer.
+
 ## Owner console
 
 A built-in, owner-only admin console (navbar → avatar → **Console**, or

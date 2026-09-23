@@ -7,6 +7,7 @@
 import { IMG, GENRES, SOCIAL } from './config.js';
 import { t, getLang, GENRE_NAMES } from './i18n.js';
 import { getMovie, getProviders, getTitle, getProvidersFor, searchMovies, apiState } from './api.js';
+import { isBlockedTitle } from './content.js';
 import { isPublicDomain } from './archive.js';
 import { openPlayer, openTrailer } from './player.js';
 
@@ -426,7 +427,9 @@ export async function renderSearchResults(query) {
   box.innerHTML = '';
   if (!results.length) {
     box.innerHTML = `<div class="search-empty">${t('search.none')}</div>`;
-  } else {
+  }
+  const rendered = [];
+  {
     results.forEach((m, i) => {
       const btn = document.createElement('button');
       btn.className = 'search-result';
@@ -439,9 +442,20 @@ export async function renderSearchResults(query) {
         <div class="sr-m">${year || '—'} · ★ ${m.vote_average ? m.vote_average.toFixed(1) : '–'}</div></div>`;
       btn.addEventListener('click', () => { box.classList.remove('open'); openMovieModal(m.id, null, m.media_type === 'tv' || m.first_air_date ? 'tv' : 'movie'); });
       box.appendChild(btn);
+      rendered.push({ m, btn });
     });
   }
   box.classList.add('open');
+
+  // Content policy sweep: remove LGBT-themed hits once their keywords resolve
+  // (search can't be server-filtered, so each suggestion is checked async).
+  for (const { m, btn } of rendered) {
+    isBlockedTitle('movie', m.id).then((bad) => {
+      if (!bad) return;
+      btn.remove();
+      if (!box.querySelector('.search-result')) box.innerHTML = `<div class="search-empty">${t('search.none')}</div>`;
+    });
+  }
 }
 
 // ---------------------------------------------------------------------------

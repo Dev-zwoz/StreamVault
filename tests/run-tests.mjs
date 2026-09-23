@@ -121,7 +121,7 @@ function stubFetch() {
     if (url.includes('/trending/movie/week')) {
       return json({ page: 1, results: Array.from({ length: 20 }, (_, i) => tmdbMovie(i + 1)) });
     }
-    if (url.includes('/search/movie')) return json({ page: 1, results: [tmdbMovie(1), tmdbMovie(2)] });
+    if (url.includes('/search/movie')) return json({ page: 1, results: [tmdbMovie(0, { id: 142, title: 'Blocked Romance' }), tmdbMovie(1)] });
     if (/\/(movie)\/(popular|top_rated|now_playing|upcoming)/.test(url)) {
       const u = new URL(url);
       const page = Number(u.searchParams.get('page') || 1);
@@ -139,6 +139,13 @@ function stubFetch() {
         page, total_pages: 6, total_results: 107,
         results: Array.from({ length: 18 }, (_, i) => mk((page - 1) * 18 + i + 1)),
       });
+    }
+    // content-policy keyword lookups (/movie|tv/{id}/keywords) — id 142 is the blocked fixture
+    if (/\/(movie|tv)\/\d+\/keywords/.test(url)) {
+      const kid = Number(url.match(/\/(movie|tv)\/(\d+)/)[2]);
+      return json(kid === 142
+        ? { keywords: [{ id: 158718, name: 'lgbt' }, { id: 363345, name: 'gay' }], results: [{ id: 158718, name: 'lgbt' }] }
+        : { keywords: [], results: [] });
     }
     if (url.includes('/watch/providers')) {
       return json({ results: { ID: { link: 'https://www.justwatch.com', flatrate: [{ provider_name: 'Fixtureflix', logo_path: '/fx.jpg' }] } } });
@@ -462,6 +469,11 @@ const seenRequests = () => [
   ...fetchLog,
   ...Object.keys(w.sessionStorage).filter((k) => k.startsWith('svc:')).map((k) => k.slice(4)),
 ];
+const discSeen = seenRequests();
+check('content policy on every discover: LGBT keywords excluded + teen ceiling (PG-13)',
+  discSeen.some((u) => u.includes('/discover/') && u.includes('without_keywords=158718') && u.includes('363345')) &&
+  discSeen.some((u) => u.includes('/discover/movie') && u.includes('certification.lte=PG-13') && u.includes('certification_country=US')),
+  discSeen.find((u) => u.includes('/discover/movie'))?.split('?')[1] || 'no discover yet');
 const expectFetch = async (trigger, matcher, label, extra = '') => {
   fetchLog.length = 0;
   trigger();
@@ -583,6 +595,19 @@ check('TMDB language param follows UI', await (async () => {
 })());
 
 // ---------------------------------------------------------------------------
+console.log('\n== CONTENT POLICY (guard + search) ==');
+await player.openPlayer({ id: 142, title: 'Blocked Romance' }, 'movie');
+await sleep(120);
+const guardToast = doc.querySelector('#toasts .toast:last-child span')?.textContent || '';
+check('LGBT-tagged title blocked at play time (toast, player never opens)',
+  !doc.getElementById('player-modal').classList.contains('open') && /hidden by your content settings/i.test(guardToast), guardToast);
+
+await ui.renderSearchResults('night');
+await sleep(140);
+const searchLeft = doc.querySelectorAll('#search-results .search-result').length;
+check('search suggestions sweep LGBT-tagged hits out', searchLeft === 1, `left: ${searchLeft}`);
+
+// ---------------------------------------------------------------------------
 console.log('\n== PLAYER ==');
 // PD title → native <video> from archive.org
 const pdMovie = { id: 10331, title: 'Night of the Living Dead', poster_path: null };
@@ -631,6 +656,23 @@ check('notice toggle turns the banner off (persisted)', account.getSettings().em
 noticeSw().click();
 await sleep(10);
 check('notice toggle turns the banner back on', account.getSettings().embedNotice === true);
+
+const maturityBtns = () => [...doc.querySelectorAll('#settings-modal [data-m]')];
+check('maturity pills render — 4 levels, Teen default', maturityBtns().length === 4 && doc.querySelector('#settings-modal [data-m].active')?.dataset.m === 'teen');
+fetchLog.length = 0;
+maturityBtns().find((b) => b.dataset.m === 'mature').click();
+await sleep(120);
+check('mature level lifts the ceiling (no certification.lte on new discovers)',
+  fetchLog.some((u) => u.includes('/discover/movie') && !u.includes('certification.lte')) &&
+  fetchLog.some((u) => u.includes('/discover/') && u.includes('without_keywords=')), // LGBT filter stays on
+  fetchLog.slice(-2).map((u) => u.split('?')[1]).join(' | '));
+check('maturity change reloads rows + grid', fetchLog.filter((u) => u.includes('/discover/')).length >= 4, String(fetchLog.filter((u) => u.includes('/discover/')).length));
+fetchLog.length = 0;
+maturityBtns().find((b) => b.dataset.m === 'family').click();
+await sleep(120);
+check('family level = PG ceiling', fetchLog.some((u) => u.includes('/discover/movie') && u.includes('certification.lte=PG-13') === false && /[?&]certification\.lte=PG(&|$)/.test(u)));
+maturityBtns().find((b) => b.dataset.m === 'teen').click(); // restore default for later sections
+await sleep(80);
 doc.getElementById('settings-modal').classList.remove('open');
 
 // ---------------------------------------------------------------------------
@@ -724,6 +766,9 @@ check('README credits Rust (cinrift) with the Discord link', readme.includes('Ru
 check('README documents 19 languages', /19 (interface )?languages/i.test(readme));
 check('README documents the owner console + demo account', /Owner Console|owner console/i.test(readme));
 check('README no longer advertises AdShield', !/AdShield/i.test(readme));
+const legal = readFileSync(join(root, 'legal.html'), 'utf8');
+check('legal.html ships Terms / Privacy / Content Policy / DMCA', ['id="terms"', 'id="privacy"', 'id="content-policy"', 'id="dmca"'].every((s) => legal.includes(s)));
+check('footer links to the legal pages', INDEX_HTML.includes('legal.html#terms') && INDEX_HTML.includes('legal.html#privacy') && INDEX_HTML.includes('legal.html#content-policy') && INDEX_HTML.includes('legal.html#dmca'));
 
 // ---------------------------------------------------------------------------
 console.log('\n==========================================');
@@ -734,3 +779,5 @@ if (failed) {
   process.exit(1);
 }
 console.log('ALL CHECKS GREEN');
+
+process.exit(0); // IO auto-scroll keeps timers alive — exit explicitly after the tally

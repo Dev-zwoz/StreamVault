@@ -9,6 +9,7 @@
    ============================================================================ */
 
 import { t } from './i18n.js';
+import { MATURITY_LEVELS } from './config.js';
 import { toast } from './ui.js';
 
 const USER_KEY = 'sv:user';
@@ -22,6 +23,7 @@ export const OWNER_SEED = { name: 'Vault Owner', email: 'admin@streamvault.local
 export const DEFAULT_SETTINGS = {
   reduceMotion: false,   // force-disable decorative animation
   heroRotate: true,      // auto-rotate hero backdrops
+  contentMaturity: 'teen', // all | family | teen | mature (R/NC-17/TV-MA needs “mature”)
   embedNotice: true,     // gold “Open standalone player” banner when framed
   quality: 'Auto',       // pinned VidRift rendition: Auto/1080p/720p/480p
 };
@@ -481,6 +483,14 @@ export function openSettings() {
       </div>
 
       <div class="setting-row">
+        <div><b>${t('settings.maturity')}</b><small>${t('settings.maturityDesc')}</small></div>
+        <div class="quality-pills" role="radiogroup" aria-label="${t('settings.maturity')}">
+          ${MATURITY_LEVELS.map((l) =>
+            `<button role="radio" aria-checked="${s.contentMaturity === l.id}" class="${s.contentMaturity === l.id ? 'active' : ''}" data-m="${l.id}">${t(`maturity.${l.id}`)}</button>`).join('')}
+        </div>
+      </div>
+
+      <div class="setting-row">
         <div><b>${t('settings.motion')}</b><small>${t('settings.motionDesc')}</small></div>
         <button class="switch ${s.reduceMotion ? 'on' : ''}" data-set="reduceMotion" role="switch" aria-checked="${s.reduceMotion}"><span></span></button>
       </div>
@@ -509,6 +519,15 @@ export function openSettings() {
     b.addEventListener('click', () => {
       saveSettings({ quality: b.dataset.q });
       modal.querySelectorAll('[data-q]').forEach((x) => {
+        x.classList.toggle('active', x === b);
+        x.setAttribute('aria-checked', String(x === b));
+      });
+    }));
+
+  modal.querySelectorAll('[data-m]').forEach((b) =>
+    b.addEventListener('click', () => {
+      saveSettings({ contentMaturity: b.dataset.m }); // sv:settings → grid + rows reload with the new ceiling
+      modal.querySelectorAll('[data-m]').forEach((x) => {
         x.classList.toggle('active', x === b);
         x.setAttribute('aria-checked', String(x === b));
       });

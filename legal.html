@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Legal — StreamVault</title>
+  <meta name="description" content="Terms of Use, Privacy Policy, Content Policy and DMCA notice for StreamVault.">
+  <link rel="icon" href="assets/logo.svg" type="image/svg+xml">
+  <style>
+    :root {
+      --bg: #0B0B0F; --surface: #15151C; --surface-2: #1C1C26;
+      --gold: #F5C518; --gold-deep: #D4AF37; --text: #F5F5F7; --muted: #9A9AA5;
+      --border: #262633;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--bg); color: var(--text); min-height: 100vh;
+      font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+      line-height: 1.65; overflow-x: hidden;
+    }
+    .glow {
+      position: fixed; inset: -20% -10%; z-index: 0; pointer-events: none; opacity: .5;
+      background:
+        radial-gradient(46% 38% at 18% 12%, rgba(245,197,24,.12), transparent 62%),
+        radial-gradient(42% 40% at 82% 22%, rgba(109,40,217,.18), transparent 64%);
+    }
+    header {
+      position: sticky; top: 0; z-index: 10;
+      background: rgba(11,11,15,.85); backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+    .bar {
+      max-width: 880px; margin: 0 auto; padding: 14px 20px;
+      display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+    }
+    .brand {
+      display: inline-flex; align-items: center; gap: 10px; text-decoration: none; color: var(--text);
+      font-weight: 800; font-size: 1.1rem; letter-spacing: -.02em;
+    }
+    .brand b { color: var(--gold); }
+    .back {
+      color: var(--muted); text-decoration: none; font-size: .86rem; font-weight: 600;
+      padding: 8px 14px; border: 1px solid var(--border); border-radius: 999px;
+      transition: color .15s, border-color .15s;
+    }
+    .back:hover { color: var(--gold); border-color: var(--gold); }
+    main { position: relative; z-index: 1; max-width: 880px; margin: 0 auto; padding: 28px 20px 80px; }
+    nav.toc {
+      display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 34px;
+    }
+    nav.toc a {
+      color: var(--muted); text-decoration: none; font-size: .86rem; font-weight: 600;
+      padding: 8px 16px; border: 1px solid var(--border); border-radius: 999px;
+      transition: color .15s, border-color .15s, background .15s;
+    }
+    nav.toc a:hover, nav.toc a.active { color: #0B0B0F; background: var(--gold); border-color: var(--gold); }
+    section.doc {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 18px;
+      padding: 30px clamp(18px, 4vw, 40px); margin-bottom: 26px;
+      scroll-margin-top: 90px;
+    }
+    section.doc h1 {
+      font-size: clamp(1.4rem, 3vw, 1.8rem); letter-spacing: -.02em; margin-bottom: 4px;
+    }
+    section.doc .updated { color: var(--muted); font-size: .8rem; margin-bottom: 20px; }
+    section.doc h2 { font-size: 1.02rem; margin: 22px 0 8px; color: var(--gold); }
+    section.doc p, section.doc li { color: #C9C9D4; font-size: .93rem; }
+    section.doc ul, section.doc ol { padding-left: 22px; margin: 8px 0; }
+    section.doc li { margin: 4px 0; }
+    section.doc a { color: var(--gold); }
+    .notice {
+      background: rgba(245,197,24,.08); border: 1px solid rgba(245,197,24,.3);
+      border-radius: 12px; padding: 14px 18px; margin: 16px 0; font-size: .88rem;
+    }
+    footer {
+      border-top: 1px solid var(--border); padding: 22px 20px; text-align: center;
+      color: var(--muted); font-size: .8rem; position: relative; z-index: 1;
+    }
+    footer a { color: var(--muted); }
+  </style>
+</head>
+<body>
+  <div class="glow" aria-hidden="true"></div>
+
+  <header>
+    <div class="bar">
+      <a class="brand" href="index.html">Stream<b>Vault</b></a>
+      <a class="back" href="index.html">← Back to StreamVault</a>
+    </div>
+  </header>
+
+  <main>
+    <nav class="toc" aria-label="Legal documents">
+      <a href="#terms">Terms of Use</a>
+      <a href="#privacy">Privacy Policy</a>
+      <a href="#content-policy">Content Policy</a>
+      <a href="#dmca">DMCA</a>
+    </nav>
+
+    <!-- ================================================================== -->
+    <section class="doc" id="terms">
+      <h1>Terms of Use</h1>
+      <p class="updated">Last updated: September 23, 2026</p>
+
+      <p>By accessing or using StreamVault (the “Service”), you agree to these Terms of Use. If you do not agree, please do not use the Service.</p>
+
+      <h2>1. What StreamVault is</h2>
+      <p>StreamVault is a free discovery interface for movies and TV shows. It does <strong>not</strong> host, upload, store or transmit any video files. All catalogue data and artwork come from <a href="https://www.themoviedb.org/" rel="noopener noreferrer" target="_blank">The Movie Database (TMDB)</a>. Playback is provided by third parties: verified public-domain films stream directly from the <a href="https://archive.org" rel="noopener noreferrer" target="_blank">Internet Archive</a>, and other titles play through third-party embed providers such as VidRift.</p>
+
+      <h2>2. Acceptable use</h2>
+      <ul>
+        <li>Use the Service only for personal, non-commercial viewing.</li>
+        <li>Do not attempt to break, overload, scrape abusively or circumvent the Service or its data providers.</li>
+        <li>Do not misuse the account feature: keep your credentials safe; you are responsible for activity under your account.</li>
+        <li>You must meet the minimum age required by your local laws to use this Service, and respect the <a href="#content-policy">Content Policy</a> maturity settings.</li>
+      </ul>
+
+      <h2>3. Third-party content — no warranty</h2>
+      <p>Playback availability, quality and legality of third-party embeds are outside our control. The Service is provided “as is” and “as available”, without warranties of any kind, express or implied, including availability, accuracy of metadata, or fitness for a particular purpose.</p>
+
+      <h2>4. Accounts</h2>
+      <p>Optional local accounts (including the owner console) exist for demo and personalisation purposes. Accounts, watch history and settings live in your browser’s local storage — they are not stored on a server. We may disable or reset demo accounts at any time.</p>
+
+      <h2>5. Limitation of liability</h2>
+      <p>To the maximum extent permitted by law, StreamVault and its operator shall not be liable for any indirect, incidental, special or consequential damages arising from your use of, or inability to use, the Service or any third-party content reached through it.</p>
+
+      <h2>6. Changes</h2>
+      <p>We may update these Terms at any time by publishing a new version on this page. Continued use after changes take effect constitutes acceptance.</p>
+
+      <h2>7. Contact</h2>
+      <p>Questions about these Terms: <a href="https://discord.com/users/1469638087268110399" rel="noopener noreferrer" target="_blank">message the operator on Discord</a>.</p>
+    </section>
+
+    <!-- ================================================================== -->
+    <section class="doc" id="privacy">
+      <h1>Privacy Policy</h1>
+      <p class="updated">Last updated: September 23, 2026</p>
+
+      <p>StreamVault is a static website. It runs no user database and collects no personal data on any server. In short: <strong>your data stays in your browser.</strong></p>
+
+      <h2>1. What is stored, and where</h2>
+      <ul>
+        <li><strong>Local storage (your browser only):</strong> optional account profile (name, e-mail, salted SHA-256 password hash, role), watchlist, playback positions, UI settings (language, maturity level, motion, quality), admin event log.</li>
+        <li><strong>Session storage:</strong> a short-lived cache of TMDB API responses (30 minutes) to reduce network traffic.</li>
+        <li><strong>No cookies, no analytics, no ad trackers, no fingerprinting.</strong></li>
+      </ul>
+      <p>You can erase everything at once via <em>Settings → Clear local data</em>, or by clearing site data in your browser.</p>
+
+      <h2>2. Third parties the site calls</h2>
+      <ul>
+        <li><strong>TMDB</strong> — catalogue data and images. Requests include your chosen interface language; see <a href="https://www.themoviedb.org/privacy-policy" rel="noopener noreferrer" target="_blank">TMDB’s privacy policy</a>.</li>
+        <li><strong>Internet Archive</strong> — metadata for public-domain films when you press play.</li>
+        <li><strong>VidRift</strong> — video embed provider for non-public-domain titles; their player may apply its own logging when loaded. See <a href="https://vidrift.net/" rel="noopener noreferrer" target="_blank">vidrift.net</a>.</li>
+        <li><strong>Disify</strong> — optional e-mail syntax/disposability check when you submit the newsletter form. Degrades to a local regex check if unreachable.</li>
+        <li><strong>JustWatch (via TMDB)</strong> — “Where to watch” provider links.</li>
+      </ul>
+
+      <h2>3. Passwords</h2>
+      <p>Local account passwords are never stored in plain text — only a salted SHA-256 hash (<code>sha256('sv1:' + email + ':' + password)</code>) kept in your own browser. Because accounts are local, losing your browser data means losing the account.</p>
+
+      <h2>4. Children</h2>
+      <p>The Service includes a maturity filter (see the <a href="#content-policy">Content Policy</a>) but is not directed at children. Use parental controls available on your device to restrict access where required.</p>
+
+      <h2>5. Contact</h2>
+      <p>Privacy questions: <a href="https://discord.com/users/1469638087268110399" rel="noopener noreferrer" target="_blank">message the operator on Discord</a>.</p>
+    </section>
+
+    <!-- ================================================================== -->
+    <section class="doc" id="content-policy">
+      <h1>Content Policy</h1>
+      <p class="updated">Last updated: September 23, 2026</p>
+
+      <p>StreamVault curates its catalogue automatically from TMDB. The following rules define what appears on the Service.</p>
+
+      <h2>1. Excluded content — LGBT-themed titles</h2>
+      <div class="notice">Titles whose theme is LGBT (lesbian, gay, bisexual, transgender, queer and closely related keyword categories) are <strong>excluded from the catalogue by operator policy</strong>. They are filtered from browsing (all rows, the library and every tab — Movies, TV and Anime) and are additionally blocked at playback time, including on the standalone player page.</div>
+
+      <h2>2. Maturity ratings</h2>
+      <p>The Service applies a default maturity ceiling of <strong>Teen (max PG-13 / TV-14)</strong>. Titles rated R, NC-17 or TV-MA are hidden unless the viewer raises the level to <strong>Mature</strong> in <em>Settings → Content maturity</em>. Available levels:</p>
+      <ul>
+        <li><strong>All ages</strong> — only G / TV-G.</li>
+        <li><strong>Family</strong> — up to PG / TV-PG.</li>
+        <li><strong>Teen</strong> (default) — up to PG-13 / TV-14.</li>
+        <li><strong>Mature</strong> — no ceiling (R / NC-17 / TV-MA appear).</li>
+      </ul>
+      <p>Selecting an exact rating in the library’s Age Rating filter is a deliberate choice by the viewer and overrides the ceiling for that search. Certifications come from TMDB (US certification data); coverage is not guaranteed for every title.</p>
+
+      <h2>3. Other exclusions</h2>
+      <ul>
+        <li>Explicit adult/pornographic material is never included (TMDB adult content is requested with <code>include_adult=false</code> everywhere).</li>
+        <li>Genre tiles, rows and the Top-10 list all inherit the same filters — there is no unfiltered surface.</li>
+      </ul>
+
+      <h2>4. Reports</h2>
+      <p>If you believe a title is miscategorised and should be excluded (or restored), <a href="https://discord.com/users/1469638087268110399" rel="noopener noreferrer" target="_blank">report it on Discord</a>. Verified reports are actioned, typically within 7 days.</p>
+    </section>
+
+    <!-- ================================================================== -->
+    <section class="doc" id="dmca">
+      <h1>DMCA Notice &amp; Takedown Procedure</h1>
+      <p class="updated">Last updated: September 23, 2026</p>
+
+      <p>StreamVault does not host any video content. Playback is performed by third parties (the Internet Archive for verified public-domain films, and independent embed providers for other titles). We respond to valid copyright notices promptly.</p>
+
+      <h2>1. Designated agent</h2>
+      <p>Copyright notices go to the operator: <a href="https://discord.com/users/1469638087268110399" rel="noopener noreferrer" target="_blank">Dev-zwoz on Discord</a> (fastest) or via the GitHub repository issues page.</p>
+
+      <h2>2. Filing a notice</h2>
+      <p>A valid takedown notice must include:</p>
+      <ol>
+        <li>Identification of the copyrighted work claimed to be infringed;</li>
+        <li>The exact URL(s) on StreamVault where the allegedly infringing title appears;</li>
+        <li>Your full name, address, e-mail and, if you are an entity, your company details;</li>
+        <li>A statement of good-faith belief that the use is not authorised by the copyright owner, its agent, or the law;</li>
+        <li>A statement, under penalty of perjury, that the information is accurate and that you are the owner or authorised to act for the owner;</li>
+        <li>Your physical or electronic signature.</li>
+      </ol>
+
+      <h2>3. What happens next</h2>
+      <ul>
+        <li>Valid notices are actioned typically within <strong>7 business days</strong>: the title is removed from the catalogue and, where technically possible, from play resolution.</li>
+        <li>We forward a copy of the notice to the embed provider actually hosting the file when appropriate.</li>
+        <li>Incomplete notices delay processing until the missing information arrives.</li>
+      </ul>
+
+      <h2>4. Counter-notice</h2>
+      <p>If content was removed by mistake or misidentification, you may file a counter-notice containing the same elements above plus consent to jurisdiction of your local courts. We will restore the entry unless the original complainant files a court action within 10 business days.</p>
+
+      <h2>5. Repeat infringers</h2>
+      <p>Because StreamVault hosts no files and no uploads, repeat-infringer policies apply to the underlying hosts (Internet Archive, embed providers), not to this Service.</p>
+    </section>
+  </main>
+
+  <footer>
+    <p>© 2026 StreamVault · <a href="index.html">Home</a> · Metadata by TMDB · Public-domain streams by the Internet Archive · Embeds by VidRift</p>
+  </footer>
+
+  <script>
+    // TOC highlight + deep-link (legal.html#privacy opens that document)
+    const links = [...document.querySelectorAll('nav.toc a')];
+    const setActive = () => {
+      const h = location.hash || '#terms';
+      links.forEach((a) => a.classList.toggle('active', a.getAttribute('href') === h));
+    };
+    window.addEventListener('hashchange', setActive);
+    setActive();
+  </script>
+</body>
+</html>

@@ -13,6 +13,7 @@ import {
   getUpcoming, getKorean, getJapanese, getIndonesian, getHollywood, getFamily,
   discover, discoverTv, getMoviesByIds, getFallback, validateEmail,
 } from './api.js';
+import { isBlockedTitle } from './content.js';
 import { loadPdMap, pdIds } from './archive.js';
 import {
   skeletonRow, fillRow, movieCard, renderGenreGrid, renderFeatures, renderFaq,
@@ -90,11 +91,23 @@ function startHeroRotation() {
   heroTimer = setInterval(() => renderHeroSlide((heroIdx + 1) % heroMovies.length), 8000);
 }
 window.addEventListener('sv:settings', startHeroRotation);
+// Maturity change → re-run home rows + library grid under the new ceiling
+let lastMaturity = null;
+window.addEventListener('sv:settings', (e) => {
+  const m = e.detail?.contentMaturity;
+  if (!m || m === lastMaturity) { lastMaturity = m ?? lastMaturity; return; }
+  const changed = lastMaturity !== null;
+  lastMaturity = m;
+  if (changed) { loadRows(); loadGrid(true); }
+});
 
 async function initHero() {
   splitHeroTitle(t('hero.title'));
   const data = await getTrending();
-  heroMovies = (data.results || []).filter((m) => m.backdrop_path).slice(0, 5);
+  // Content policy: sweep trending through the keyword guard before rendering
+  const pool = (data.results || []).filter((m) => m.backdrop_path);
+  const allowed = await Promise.all(pool.map((m) => isBlockedTitle('movie', m.id)));
+  heroMovies = pool.filter((_, i) => !allowed[i]).slice(0, 5);
   const bg = document.getElementById('hero-bg');
   const dots = document.getElementById('hero-dots');
   bg.innerHTML = ''; dots.innerHTML = '';
@@ -144,10 +157,13 @@ async function loadRows() {
   skeletonRow(document.getElementById('row-top10'));
 
   // Top 10 — trending with big outlined rank numbers
-  getTrending().then((data) => {
+  getTrending().then(async (data) => {
     const el = document.getElementById('row-top10');
     el.innerHTML = '';
-    (data.results || []).slice(0, 10).forEach((m, i) => {
+    // content policy: filter, then rank what's left 1..10
+    const pool = data.results || [];
+    const ok = await Promise.all(pool.map((m) => isBlockedTitle('movie', m.id)));
+    pool.filter((_, i) => !ok[i]).slice(0, 10).forEach((m, i) => {
       const card = movieCard(m, { revealChild: true });
       card.classList.add('ranked');
       card.style.setProperty('--reveal-delay', `${i * 70}ms`);

@@ -9,6 +9,7 @@ import { IMG, VIDRIFT, CREDITS } from './config.js';
 import { t } from './i18n.js';
 import { resolveSource } from './archive.js';
 import { getSettings, saveSettings, recordWatch } from './account.js';
+import { isBlockedTitle } from './content.js';
 
 const POS_KEY = 'sv:positions';
 
@@ -96,6 +97,13 @@ function paintCredit() {
 
 /** Open the cinema player for a movie or TV title (best source, automatic) */
 export async function openPlayer(movie, mediaType = 'movie') {
+  // Content policy: LGBT-themed titles are excluded site-wide — block them at
+  // play time too (discover filters can't cover direct links / search hits).
+  if (await isBlockedTitle(mediaType, movie.id)) {
+    const { toast } = await import('./ui.js');
+    toast(t('toast.blocked'));
+    return;
+  }
   const m = modal();
   currentMovieId = movie.id;
   tintAmbient(movie);
@@ -156,6 +164,7 @@ export async function openPlayer(movie, mediaType = 'movie') {
     // Setting (Settings → “Standalone-player notice”) and its × dismisses it
     // for good (persisted in sv:settings).
     let framedNoteShown = false;
+    let hint = null;
     if (framed() && getSettings().embedNotice !== false) {
       framedNoteShown = true;
       const note = document.createElement('div');
@@ -186,7 +195,7 @@ export async function openPlayer(movie, mediaType = 'movie') {
     // Escape hatch: give the viewer a one-click way out (skipped when the
     // framed note is up — one gold CTA is enough).
     if (!framedNoteShown) {
-      const hint = document.createElement('div');
+      hint = document.createElement('div');
       hint.className = 'player-newtab-hint';
       hint.innerHTML = `<span>${t('player.iframeHint')}</span>`;
       const btn = document.createElement('a');
@@ -202,7 +211,7 @@ export async function openPlayer(movie, mediaType = 'movie') {
 
     const saved = getPositions()[movie.id];
     iframe.addEventListener('load', () => {
-      hint.classList.remove('show'); // player responded — hide the hint
+      hint?.classList.remove('show'); // player responded — hide the hint
       if (saved && saved.t > 20) {
         iframe.contentWindow?.postMessage({ type: 'vidrift:resume', currentTime: saved.t }, VIDRIFT.origin);
       }

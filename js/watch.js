@@ -11,6 +11,7 @@ import { CREDITS, VIDRIFT } from './config.js';
 import { t, getLang, applyI18n } from './i18n.js';
 import { listSources } from './archive.js';
 import { getSettings } from './account.js';
+import { isBlockedTitle } from './content.js';
 
 function require_settings() { return { getSettings }; }
 
@@ -159,6 +160,11 @@ function load(i) {
   paintChrome();
   if (!state.id) {
     el('watch-frame').innerHTML = `<p class="watch-empty">${t('watch.notfound')}</p>`;
+    return;
+  }
+  // Content policy: LGBT-themed titles stay excluded on the standalone page too
+  if (await isBlockedTitle(state.type, state.id)) {
+    el('watch-frame').innerHTML = `<p class="watch-empty">${t('toast.blocked')}</p>`;
     return;
   }
   try {
