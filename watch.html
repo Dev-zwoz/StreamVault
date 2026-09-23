@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>StreamVault — Player</title>
+  <meta name="description" content="StreamVault standalone player — a clean, top-level page built for full-quality playback.">
+  <meta name="robots" content="noindex">
+
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='96' fill='%230B0B0F'/%3E%3Ccircle cx='256' cy='256' r='206' fill='none' stroke='%23F5C518' stroke-width='30'/%3E%3Ccircle cx='256' cy='256' r='128' fill='none' stroke='%23D4AF37' stroke-width='22'/%3E%3Cpath d='M226 200l88 56-88 56z' fill='%23F5C518'/%3E%3C/svg%3E">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap">
+
+  <link rel="stylesheet" href="styles/base.css">
+  <link rel="stylesheet" href="styles/components.css">
+  <link rel="stylesheet" href="styles/animations.css">
+</head>
+<body class="watch-page">
+  <div class="watch-aurora" aria-hidden="true"></div>
+
+  <header class="watch-bar">
+    <a class="watch-back" id="watch-back" href="index.html">← Back to StreamVault</a>
+
+    <div class="watch-head">
+      <b class="watch-title" id="watch-title">StreamVault</b>
+      <small class="watch-sub muted" id="watch-sub"></small>
+    </div>
+
+    <div class="watch-tools">
+      <div class="watch-sources" id="watch-sources" role="tablist" aria-label="Sources"></div>
+      <a class="btn btn-ghost btn-sm" id="watch-embed" href="#" target="_blank" rel="noopener noreferrer" hidden>↗</a>
+    </div>
+  </header>
+
+  <main class="watch-stage">
+    <div class="watch-frame" id="watch-frame">
+      <div class="watch-boot">
+        <span class="watch-boot-ring" aria-hidden="true"></span>
+        <p id="watch-boot-text">Building the player…</p>
+      </div>
+    </div>
+    <p class="watch-note muted" id="watch-note"></p>
+  </main>
+
+  <footer class="watch-foot">
+    <span id="watch-credit"></span>
+  </footer>
+
+  <script type="module" src="js/watch.js"></script>
+</body>
+</html>

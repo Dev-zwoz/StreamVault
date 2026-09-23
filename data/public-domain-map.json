@@ -1,0 +1,17 @@
+{
+  "_comment": "Maps TMDB movie ids to Internet Archive identifiers for verified public-domain films. To add a film: find its TMDB id (themoviedb.org/movie/{id}), locate the film on archive.org, confirm it is public domain, and add an entry. `file` is optional — when omitted the player resolves the best MP4 from the Archive metadata API at runtime.",
+  "films": {
+    "10331": { "archiveId": "night_of_the_living_dead_dvd", "file": "Night.mp4", "title": "Night of the Living Dead", "year": 1968 },
+    "3085":  { "archiveId": "his_girl_friday", "file": "his_girl_friday.mp4", "title": "His Girl Friday", "year": 1940 },
+    "15856": { "archiveId": "house_on_haunted_hill", "title": "House on Haunted Hill", "year": 1959 },
+    "16093": { "archiveId": "carnival_of_souls", "title": "Carnival of Souls", "year": 1962 },
+    "20367": { "archiveId": "Detour", "title": "Detour", "year": 1945 },
+    "20246": { "archiveId": "TheStranger_0", "title": "The Stranger", "year": 1946 },
+    "24452": { "archiveId": "TheLittleShopOfHorrors", "title": "The Little Shop of Horrors", "year": 1960 },
+    "10513": { "archiveId": "plan-9-from-outer-space", "title": "Plan 9 from Outer Space", "year": 1957 },
+    "18398": { "archiveId": "suddenly", "file": "suddenly.mp4", "title": "Suddenly", "year": 1954 },
+    "653":   { "archiveId": "Nosferatu_DVD_quality", "title": "Nosferatu", "year": 1922 },
+    "961":   { "archiveId": "The_General_Buster_Keaton", "title": "The General", "year": 1926 },
+    "4808":  { "archiveId": "charade-1963-cary-grant-audrey-hepburn-comedy-mystery-romance-thriller-full-movie", "file": "Charade_READY.mp4", "title": "Charade", "year": 1963 }
+  }
+}
