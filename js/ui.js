@@ -1,12 +1,12 @@
 /* ============================================================================
    StreamVault — ui.js
-   Rendering: cards (movie / TV / anime), carousels, genre grid, features, FAQ,
-   search, watchlist, media detail modal (FLIP), toasts, social links.
+   Rendering: cards, carousels, genre grid, features, FAQ, search, watchlist,
+   movie detail modal (FLIP transition), toasts, socials.
    ============================================================================ */
 
-import { IMG, GENRES, SOCIAL, CERTIFICATIONS } from './config.js';
+import { IMG, GENRES, SOCIAL } from './config.js';
 import { t, getLang, GENRE_NAMES } from './i18n.js';
-import { getMedia, getProviders, getSeason, searchMulti, apiState } from './api.js';
+import { getMovie, getProviders, searchMovies, apiState } from './api.js';
 import { isPublicDomain } from './archive.js';
 import { openPlayer, openTrailer } from './player.js';
 
@@ -15,18 +15,7 @@ import { openPlayer, openTrailer } from './player.js';
 // ---------------------------------------------------------------------------
 export function genreName(id) {
   const g = GENRES.find((x) => x.id === id);
-  if (!g) return '';
-  return (GENRE_NAMES[getLang()] || GENRE_NAMES.en)[g.key] || GENRE_NAMES.en[g.key] || '';
-}
-
-export const isAnime = (m) => (m.genre_ids || m.genres?.map((g) => g.id) || []).includes(16) &&
-  ['ja', 'zh', 'ko'].includes(m.original_language) && m.media_type !== 'movie';
-
-/** Media-type badge label for a card / modal */
-export function typeLabel(m) {
-  const type = m.media_type || (m.first_air_date ? 'tv' : 'movie');
-  if (type === 'tv') return isAnime(m) ? t('modal.badge.anime') : t('modal.badge.tv');
-  return t('modal.badge.movie');
+  return g ? GENRE_NAMES[getLang()][g.key] : '';
 }
 
 // ---------------------------------------------------------------------------
@@ -40,9 +29,9 @@ export function getWatchlist() {
 function saveWatchlist(list) { localStorage.setItem(WL_KEY, JSON.stringify(list)); }
 export function inWatchlist(id) { return getWatchlist().some((m) => m.id === id); }
 
-export function toggleWatchlist(media) {
+export function toggleWatchlist(movie) {
   const list = getWatchlist();
-  const idx = list.findIndex((m) => m.id === media.id);
+  const idx = list.findIndex((m) => m.id === movie.id);
   if (idx >= 0) {
     list.splice(idx, 1); saveWatchlist(list);
     toast(t('toast.removed'));
@@ -50,16 +39,9 @@ export function toggleWatchlist(media) {
     return false;
   }
   list.unshift({
-    id: media.id,
-    media_type: media.media_type || (media.first_air_date ? 'tv' : 'movie'),
-    title: media.title || media.name,
-    name: media.name,
-    poster_path: media.poster_path,
-    release_date: media.release_date || media.first_air_date,
-    first_air_date: media.first_air_date,
-    original_language: media.original_language,
-    vote_average: media.vote_average,
-    genre_ids: media.genre_ids || (media.genres || []).map((g) => g.id),
+    id: movie.id, title: movie.title, poster_path: movie.poster_path,
+    release_date: movie.release_date, vote_average: movie.vote_average,
+    genre_ids: movie.genre_ids || (movie.genres || []).map((g) => g.id),
   });
   saveWatchlist(list);
   toast(t('toast.added'));
@@ -72,7 +54,6 @@ export function toggleWatchlist(media) {
 // ---------------------------------------------------------------------------
 export function toast(msg, life = 2600) {
   const box = document.getElementById('toasts');
-  if (!box) return;
   const el = document.createElement('div');
   el.className = 'toast';
   el.style.setProperty('--toast-life', life + 'ms');
@@ -83,10 +64,10 @@ export function toast(msg, life = 2600) {
 }
 
 // ---------------------------------------------------------------------------
-// Poster helpers
+// SVG gradient poster for fallback entries / missing posters
 // ---------------------------------------------------------------------------
 export function gradientPoster(title, pair = ['#312E81', '#0B0B0F']) {
-  const short = String(title || '?').slice(0, 22);
+  const short = (title || '?').slice(0, 22);
   const svg =
     `<svg xmlns='http://www.w3.org/2000/svg' width='342' height='513'>` +
     `<defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'>` +
@@ -99,81 +80,78 @@ export function gradientPoster(title, pair = ['#312E81', '#0B0B0F']) {
   return 'data:image/svg+xml,' + encodeURIComponent(svg);
 }
 
-function posterUrl(media, size = IMG.posterSm) {
-  if (media.poster_path) return size + media.poster_path;
-  return gradientPoster(media.title || media.name, media.gradient);
+function posterUrl(movie, size = IMG.posterSm) {
+  if (movie.poster_path) return size + movie.poster_path;
+  return gradientPoster(movie.title, movie.gradient);
 }
 
 // ---------------------------------------------------------------------------
-// Media card
+// Movie card
 // ---------------------------------------------------------------------------
 const starSvg = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4-6.2-4.6-6.2 4.6 2.4-7.4L2 9.4h7.6z"/></svg>';
 const playSvg = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>';
 const plusSvg = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 5v14M5 12h14"/></svg>';
 const checkSvg = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path d="M20 6 9 17l-5-5"/></svg>';
 
-export function movieCard(media, opts = {}) {
-  const m = media.title !== undefined ? media : { ...media, title: media.name || media.title };
+export function movieCard(movie, opts = {}) {
   const card = document.createElement('article');
-  const type = m.media_type || (m.first_air_date ? 'tv' : 'movie');
   card.className = 'card' + (opts.revealChild ? ' reveal-child' : '');
   card.tabIndex = 0;
-  card.dataset.id = m.id;
-  card.dataset.type = type;
-  card.setAttribute('aria-label', m.title);
+  card.dataset.id = movie.id;
+  card.setAttribute('aria-label', movie.title);
 
-  const year = (m.release_date || m.first_air_date || '').slice(0, 4);
-  const rating = m.vote_average ? Number(m.vote_average).toFixed(1) : '–';
-  const free = type === 'movie' && isPublicDomain(m.id);
-  const chips = (m.genre_ids || []).slice(0, 2).map(genreName).filter(Boolean);
-  const listed = inWatchlist(m.id);
+  const year = (movie.release_date || '').slice(0, 4);
+  const rating = movie.vote_average ? movie.vote_average.toFixed(1) : '–';
+  const free = isPublicDomain(movie.id);
+  const chips = (movie.genre_ids || []).slice(0, 2).map(genreName).filter(Boolean);
+  const listed = inWatchlist(movie.id);
 
   card.innerHTML = `
     <div class="card-media">
-      <img loading="lazy" alt="${escapeHtml(m.title)} poster">
+      <img loading="lazy" alt="${escapeHtml(movie.title)} poster">
       <div class="card-badges">
-        ${free ? `<span class="badge-free">${t('modal.badge.free')}</span>` : `<span class="badge-type">${typeLabel({ ...m, media_type: type })}</span>`}
+        ${free ? `<span class="badge-free">${t('classics.badge')}</span>` : '<span></span>'}
         <span class="badge-hd">HD</span>
       </div>
       <span class="card-rating">${starSvg}${rating}</span>
       <div class="card-overlay">
         <div class="ov-actions">
-          <button class="ov-btn play" data-act="play" aria-label="Play ${escapeHtml(m.title)}">${playSvg}</button>
+          <button class="ov-btn play" data-act="play" aria-label="Play ${escapeHtml(movie.title)}">${playSvg}</button>
           <button class="ov-btn wl ${listed ? 'in-list' : ''}" data-act="wl" aria-label="${t(listed ? 'modal.watchlist.remove' : 'modal.watchlist.add')}">${listed ? checkSvg : plusSvg}</button>
         </div>
         ${chips.length ? `<div class="modal-chips">${chips.map((c) => `<span class="chip">${c}</span>`).join('')}</div>` : ''}
       </div>
-      ${opts.progress ? `<div class="card-progress"><i style="width:${Math.min(100, Math.round(opts.progress))}%"></i></div>` : ''}
     </div>
     <div class="card-info">
-      <div class="card-title">${escapeHtml(m.title)}</div>
+      <div class="card-title">${escapeHtml(movie.title)}</div>
       <div class="card-meta"><span>${year || '—'}</span></div>
-    </div>
-    ${opts.rank ? `<span class="rank">${opts.rank}</span>` : ''}`;
+    </div>`;
 
+  // blur-up image load
   const img = card.querySelector('img');
-  img.src = posterUrl(m);
+  img.src = posterUrl(movie);
   if (img.complete) img.classList.add('loaded');
   else img.addEventListener('load', () => img.classList.add('loaded'), { once: true });
-  img.addEventListener('error', () => { img.src = gradientPoster(m.title, m.gradient); img.classList.add('loaded'); }, { once: true });
+  img.addEventListener('error', () => { img.src = gradientPoster(movie.title, movie.gradient); img.classList.add('loaded'); }, { once: true });
 
+  // interactions
   card.addEventListener('click', (e) => {
     const btn = e.target.closest('[data-act]');
     if (btn) {
       e.stopPropagation();
-      if (btn.dataset.act === 'play') openPlayer({ ...m, media_type: type });
+      if (btn.dataset.act === 'play') openPlayer(movie);
       else {
-        const added = toggleWatchlist({ ...m, media_type: type });
+        const added = toggleWatchlist(movie);
         btn.classList.toggle('in-list', added);
         btn.innerHTML = added ? checkSvg : plusSvg;
-        if (opts.onRemove && !added) opts.onRemove(card, m);
+        if (opts.onRemove && !added) opts.onRemove(card, movie);
       }
       return;
     }
-    openMediaModal(type, m.id, card);
+    openMovieModal(movie.id, card);
   });
   card.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') { e.preventDefault(); openMediaModal(type, m.id, card); }
+    if (e.key === 'Enter') { e.preventDefault(); openMovieModal(movie.id, card); }
   });
 
   attachTilt(card);
@@ -206,7 +184,6 @@ function attachTilt(card) {
 // Rows / carousels
 // ---------------------------------------------------------------------------
 export function skeletonRow(el, n = 8) {
-  if (!el) return;
   el.innerHTML = '';
   for (let i = 0; i < n; i++) {
     const sk = document.createElement('div');
@@ -216,10 +193,9 @@ export function skeletonRow(el, n = 8) {
   }
 }
 
-export function fillRow(el, items, opts = {}) {
-  if (!el) return;
+export function fillRow(el, movies, opts = {}) {
   el.innerHTML = '';
-  items.forEach((m, i) => {
+  movies.forEach((m, i) => {
     const card = movieCard(m, opts);
     card.style.setProperty('--reveal-delay', `${Math.min(i, 10) * 60}ms`);
     el.appendChild(card);
@@ -228,12 +204,12 @@ export function fillRow(el, items, opts = {}) {
   observeChildren(el);
 }
 
+/** Reveal .reveal-child items when they enter the viewport */
 const childObserver = new IntersectionObserver((entries) => {
   entries.forEach((e) => { if (e.isIntersecting) { e.target.classList.add('in'); childObserver.unobserve(e.target); } });
 }, { rootMargin: '60px' });
 
 export function observeChildren(container) {
-  if (!container) return;
   container.querySelectorAll('.reveal-child').forEach((el) => childObserver.observe(el));
 }
 
@@ -242,7 +218,6 @@ export function initCarousel(wrap) {
   if (!wrap || wrap.dataset.carInit) return;
   wrap.dataset.carInit = '1';
   const car = wrap.querySelector('.carousel');
-  if (!car) return;
 
   const mk = (dir) => {
     const b = document.createElement('button');
@@ -258,6 +233,7 @@ export function initCarousel(wrap) {
     return b;
   };
   const prev = mk('prev'), next = mk('next');
+
   const update = () => {
     prev.toggleAttribute('disabled', car.scrollLeft < 20);
     next.toggleAttribute('disabled', car.scrollLeft > car.scrollWidth - car.clientWidth - 20);
@@ -265,11 +241,13 @@ export function initCarousel(wrap) {
   car.addEventListener('scroll', update, { passive: true });
   update();
 
+  // keyboard
   car.addEventListener('keydown', (e) => {
     if (e.key === 'ArrowRight') { e.preventDefault(); car.scrollBy({ left: 220, behavior: 'smooth' }); }
     if (e.key === 'ArrowLeft') { e.preventDefault(); car.scrollBy({ left: -220, behavior: 'smooth' }); }
   });
 
+  // momentum drag
   let down = false, startX = 0, startL = 0, vel = 0, lastX = 0, lastT = 0, moved = 0;
   car.addEventListener('pointerdown', (e) => {
     if (e.pointerType !== 'mouse') return;
@@ -289,6 +267,7 @@ export function initCarousel(wrap) {
     if (!down) return;
     down = false;
     setTimeout(() => car.classList.remove('dragging'), 0);
+    // momentum
     let v = -vel * 14;
     const glide = () => {
       if (Math.abs(v) < .4 || car.classList.contains('dragging')) return;
@@ -300,7 +279,7 @@ export function initCarousel(wrap) {
 }
 
 // ---------------------------------------------------------------------------
-// Genre tiles — icon + name only (no id numbers)
+// Genre tiles
 // ---------------------------------------------------------------------------
 const GENRE_ICONS = {
   action: '<path d="M13 2 3 14h7l-1 8 10-12h-7z"/>', adventure: '<path d="M12 2 2 22h20zM12 9v7"/>',
@@ -317,26 +296,18 @@ const GENRE_ICONS = {
   scifi: '<circle cx="12" cy="12" r="3.5"/><path d="M2 12c3-4.5 17-4.5 20 0-3 4.5-17 4.5-20 0z" transform="rotate(-25 12 12)"/>',
   thriller: '<path d="M12 9v4M12 17h.01"/><path d="M10.3 3.6 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.6a2 2 0 0 0-3.4 0z"/>',
   war: '<path d="m14.5 3.5-9 9L3 15l1.5 1.5L2 19l3 3 2.5-2.5L9 21l2.5-2.5 9-9z"/><path d="m17 7 3.5-3.5"/>',
-  western: '<path d="M4 20 12 4l8 16"/><path d="M8 20h8"/>',
-  history: '<path d="M3 21h18M5 21V9l7-5 7 5v12M9 21v-6h6v6"/>',
-  music: '<path d="M9 18V6l10-2v12"/><circle cx="6" cy="18" r="3"/><circle cx="16" cy="16" r="3"/>',
-  tv: '<rect x="3" y="6" width="18" height="13" rx="2"/><path d="m8 3 4 3 4-3"/>',
-  reality: '<path d="M4 5h16v11H4zM8 20h8"/><path d="m11 9 3 2-3 2z"/>',
-  scifi_fantasy: '<path d="M12 3v4M12 17v4M3 12h4M17 12h4"/><circle cx="12" cy="12" r="4"/>',
 };
 
 export function renderGenreGrid(onPick) {
   const grid = document.getElementById('genre-grid');
-  if (!grid) return;
   grid.innerHTML = '';
   GENRES.forEach((g, i) => {
     const tile = document.createElement('button');
     tile.className = 'genre-tile reveal-child';
-    tile.style.setProperty('--reveal-delay', `${(i % 5) * 55}ms`);
+    tile.style.setProperty('--reveal-delay', `${(i % 5) * 60}ms`);
     tile.innerHTML = `
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round">${GENRE_ICONS[g.key] || GENRE_ICONS.drama}</svg>
-      <b>${(GENRE_NAMES[getLang()] || GENRE_NAMES.en)[g.key] || GENRE_NAMES.en[g.key]}</b>
-      <i class="gt-arrow">${t('genres.explore')} →</i>`;
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round">${GENRE_ICONS[g.key]}</svg>
+      <b>${GENRE_NAMES[getLang()][g.key]}</b><span>TMDB ${g.id}</span>`;
     tile.addEventListener('click', (e) => { rippleAt(tile, e); onPick(g.id); });
     grid.appendChild(tile);
   });
@@ -367,7 +338,6 @@ const FEATURE_ICONS = [
 
 export function renderFeatures() {
   const grid = document.getElementById('feature-grid');
-  if (!grid) return;
   grid.innerHTML = '';
   for (let i = 1; i <= 6; i++) {
     const card = document.createElement('div');
@@ -383,7 +353,6 @@ export function renderFeatures() {
 
 export function renderFaq() {
   const list = document.getElementById('faq-list');
-  if (!list) return;
   list.innerHTML = '';
   for (let i = 1; i <= 7; i++) {
     const item = document.createElement('div');
@@ -409,7 +378,7 @@ export function renderFaq() {
 }
 
 // ---------------------------------------------------------------------------
-// Social links — real anchor navigation (target=_blank, no interception)
+// Social icon rows
 // ---------------------------------------------------------------------------
 const SOCIAL_SVGS = {
   github: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5A11.5 11.5 0 0 0 .5 12a11.5 11.5 0 0 0 7.86 10.93c.58.1.79-.25.79-.56v-2.17c-3.2.7-3.87-1.37-3.87-1.37-.53-1.33-1.28-1.69-1.28-1.69-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.19 1.76 1.19 1.03 1.76 2.7 1.25 3.35.96.1-.75.4-1.26.72-1.55-2.55-.29-5.23-1.28-5.23-5.68 0-1.26.45-2.28 1.19-3.09-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.17 1.18a11 11 0 0 1 5.78 0c2.2-1.49 3.16-1.18 3.16-1.18.63 1.59.24 2.76.12 3.05.74.8 1.18 1.83 1.18 3.09 0 4.41-2.68 5.38-5.24 5.67.41.35.78 1.05.78 2.12v3.14c0 .31.2.67.8.56A11.5 11.5 0 0 0 23.5 12 11.5 11.5 0 0 0 12 .5z"/></svg>',
@@ -423,43 +392,35 @@ export function renderSocials() {
     Object.entries(SOCIAL).forEach(([key, s]) => {
       const a = document.createElement('a');
       a.className = 'social-link';
-      a.href = s.url;                    // plain anchor: real navigation everywhere
-      a.target = '_blank';
-      a.rel = 'noopener noreferrer';
+      a.href = s.url; a.target = '_blank'; a.rel = 'noopener noreferrer';
       a.dataset.tip = s.label;
-      a.setAttribute('aria-label', `${key} — ${s.url}`);
+      a.setAttribute('aria-label', `${key} — ${s.label}`);
       a.innerHTML = SOCIAL_SVGS[key];
-      row.appendChild(a);
-    });
-  });
-  // Text variants (footer / about) — even if pop-ups are blocked, these are links
-  document.querySelectorAll('[data-social-links]').forEach((row) => {
-    row.innerHTML = '';
-    Object.entries(SOCIAL).forEach(([key, s]) => {
-      const a = document.createElement('a');
-      a.className = 'social-text-link';
-      a.href = s.url;
-      a.target = '_blank';
-      a.rel = 'noopener noreferrer';
-      a.innerHTML = `${SOCIAL_SVGS[key]}<span>${s.handle}</span>`;
+      // Embedded previews sometimes swallow target="_blank" pop-ups.
+      // Force the navigation: try a new tab, fall back to direct navigation.
+      a.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const win = window.open(s.url, '_blank', 'noopener,noreferrer');
+        if (!win) window.top.location.href = s.url;
+      });
       row.appendChild(a);
     });
   });
 }
+// Re-render social rows created after boot (e.g. the auth page)
 window.addEventListener('sv:rerender-socials', renderSocials);
 
 // ---------------------------------------------------------------------------
-// Search (debounced by caller) — movies + TV + anime
+// Search (debounced by caller)
 // ---------------------------------------------------------------------------
 export async function renderSearchResults(query) {
   const box = document.getElementById('search-results');
-  if (!box) return;
   if (!query || query.length < 2) { box.classList.remove('open'); box.innerHTML = ''; return; }
-  const data = await searchMulti(query);
+  const data = await searchMovies(query);
   const results = (data.results || [])
-    .filter((m) => m.media_type !== 'person')
-    .filter((m) => apiState.online ? true : (m.title || '').toLowerCase().includes(query.toLowerCase()))
-    .slice(0, 9);
+    .filter((m) => apiState.online ? true : m.title.toLowerCase().includes(query.toLowerCase()))
+    .slice(0, 8);
   box.innerHTML = '';
   if (!results.length) {
     box.innerHTML = `<div class="search-empty">${t('search.none')}</div>`;
@@ -470,12 +431,11 @@ export async function renderSearchResults(query) {
       btn.style.animationDelay = `${i * 40}ms`;
       btn.setAttribute('role', 'option');
       const year = (m.release_date || '').slice(0, 4);
-      const type = m.media_type || 'movie';
       btn.innerHTML = `
         <img src="${m.poster_path ? IMG.posterSm + m.poster_path : gradientPoster(m.title, m.gradient)}" alt="" loading="lazy">
         <div><div class="sr-t">${escapeHtml(m.title)}</div>
-        <div class="sr-m">${year || '—'} · ★ ${m.vote_average ? Number(m.vote_average).toFixed(1) : '–'} · ${typeLabel({ ...m, media_type: type })}</div></div>`;
-      btn.addEventListener('click', () => { box.classList.remove('open'); openMediaModal(type, m.id); });
+        <div class="sr-m">${year || '—'} · ★ ${m.vote_average ? m.vote_average.toFixed(1) : '–'}</div></div>`;
+      btn.addEventListener('click', () => { box.classList.remove('open'); openMovieModal(m.id); });
       box.appendChild(btn);
     });
   }
@@ -483,15 +443,16 @@ export async function renderSearchResults(query) {
 }
 
 // ---------------------------------------------------------------------------
-// Media detail modal (movies + TV + anime), FLIP from the clicked card
+// Movie detail modal (FLIP from clicked card)
 // ---------------------------------------------------------------------------
 let lastFocused = null;
 
-export async function openMediaModal(type, id, fromCard = null) {
-  const modal = document.getElementById('media-modal');
+export async function openMovieModal(id, fromCard = null) {
+  const modal = document.getElementById('movie-modal');
   const backdrop = document.getElementById('modal-backdrop');
   lastFocused = document.activeElement;
 
+  // FLIP: start from the card's rect
   if (fromCard && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
     const r = fromCard.getBoundingClientRect();
     const m = { w: Math.min(960, innerWidth - 32), h: Math.min(innerHeight * .86, 820) };
@@ -512,8 +473,8 @@ export async function openMediaModal(type, id, fromCard = null) {
   document.body.style.overflow = 'hidden';
   modal.focus();
 
-  let media;
-  try { media = await getMedia(type, id); }
+  let movie;
+  try { movie = await getMovie(id); }
   catch {
     modal.innerHTML = `<div style="display:grid;place-items:center;height:100%;padding:40px;text-align:center">
       <div><h3>Offline</h3><p class="muted" style="margin-top:8px">Full details need a TMDB connection.</p>
@@ -521,36 +482,23 @@ export async function openMediaModal(type, id, fromCard = null) {
     return;
   }
 
-  renderModalContent(modal, { ...media, media_type: type });
-  loadProviders(type, id);
+  renderModalContent(modal, movie);
+  loadProviders(movie.id);
 }
 
-/** Backwards-compatible alias */
-export const openMovieModal = (id, fromCard) => openMediaModal('movie', id, fromCard);
-
-function renderModalContent(modal, media) {
-  const type = media.media_type;
-  const title = media.title || media.name;
-  const date = media.release_date || media.first_air_date || '';
-  const year = date.slice(0, 4);
-  const runtime = media.runtime
-    ? `${Math.floor(media.runtime / 60)}h ${media.runtime % 60}m`
-    : media.number_of_seasons ? `${media.number_of_seasons}× ${t('modal.seasons')}` : '';
-  const score = Math.round((media.vote_average || 0) * 10);
-  const director = (media.credits?.crew || []).find((c) => c.job === 'Director');
-  const creator = (media.created_by || [])[0];
-  const cast = (media.credits?.cast || []).slice(0, 12);
-  const trailer = (media.videos?.results || []).find((v) => v.site === 'YouTube' && v.type === 'Trailer')
-    || (media.videos?.results || []).find((v) => v.site === 'YouTube');
-  const free = type === 'movie' && isPublicDomain(media.id);
-  const listed = inWatchlist(media.id);
-  const similar = [...(media.similar?.results || []), ...(media.recommendations?.results || [])]
-    .map((m) => ({ ...m, media_type: m.media_type || type }))
-    .filter((m, i, arr) => arr.findIndex((x) => x.id === m.id) === i && m.id !== media.id)
+function renderModalContent(modal, movie) {
+  const year = (movie.release_date || '').slice(0, 4);
+  const runtime = movie.runtime ? `${Math.floor(movie.runtime / 60)}h ${movie.runtime % 60}m` : '';
+  const score = Math.round((movie.vote_average || 0) * 10);
+  const director = (movie.credits?.crew || []).find((c) => c.job === 'Director');
+  const cast = (movie.credits?.cast || []).slice(0, 12);
+  const trailer = (movie.videos?.results || []).find((v) => v.site === 'YouTube' && v.type === 'Trailer')
+    || (movie.videos?.results || []).find((v) => v.site === 'YouTube');
+  const free = isPublicDomain(movie.id);
+  const listed = inWatchlist(movie.id);
+  const similar = [...(movie.similar?.results || []), ...(movie.recommendations?.results || [])]
+    .filter((m, i, arr) => arr.findIndex((x) => x.id === m.id) === i && m.id !== movie.id)
     .slice(0, 12);
-  const seasons = (media.seasons || []).filter((s) => s.season_number > 0);
-  const cert = (media.release_dates?.results || []).find((r) => r.iso_1 === 'US')?.release_dates?.[0]?.certification
-    || (media.content_ratings?.results || []).find((r) => r.iso_3166_1 === 'US')?.rating;
 
   const C = 2 * Math.PI * 26;
   modal.innerHTML = `
@@ -558,19 +506,14 @@ function renderModalContent(modal, media) {
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M18 6 6 18M6 6l12 12"/></svg>
     </button>
     <div class="modal-hero">
-      <div class="mh-img" style="background-image:url('${media.backdrop_path ? IMG.backdrop + media.backdrop_path : ''}')"></div>
+      <div class="mh-img" style="background-image:url('${movie.backdrop_path ? IMG.backdrop + movie.backdrop_path : ''}')"></div>
     </div>
     <div class="modal-body">
       <div class="modal-top">
-        <img class="modal-poster" src="${posterUrl(media, IMG.poster)}" alt="${escapeHtml(title)} poster">
+        <img class="modal-poster" src="${posterUrl(movie, IMG.poster)}" alt="${escapeHtml(movie.title)} poster">
         <div class="modal-headline">
-          <div class="modal-kind">
-            <span class="tag type">${typeLabel(media)}</span>
-            ${cert ? `<span class="tag">${cert}</span>` : ''}
-            ${isPublicDomain(media.id) ? `<span class="tag gold">${t('modal.badge.free')}</span>` : ''}
-          </div>
-          <h2>${escapeHtml(title)}</h2>
-          ${media.tagline ? `<p class="modal-tagline">“${escapeHtml(media.tagline)}”</p>` : ''}
+          <h2>${escapeHtml(movie.title)}</h2>
+          ${movie.tagline ? `<p class="modal-tagline">“${escapeHtml(movie.tagline)}”</p>` : ''}
           <div class="modal-facts">
             <div class="rating-ring" role="img" aria-label="Rating ${score}%">
               <svg width="62" height="62"><circle class="rr-bg" cx="31" cy="31" r="26"/>
@@ -578,9 +521,9 @@ function renderModalContent(modal, media) {
               <b>${score}<small style="font-size:.6em">%</small></b>
             </div>
             <span>${year}</span>${runtime ? `<span>·</span><span>${runtime}</span>` : ''}
-            <span>·</span><span>★ ${Number(media.vote_average || 0).toFixed(1)} (${Number(media.vote_count || 0).toLocaleString()})</span>
+            <span>·</span><span>★ ${(movie.vote_average || 0).toFixed(1)} (${(movie.vote_count || 0).toLocaleString()})</span>
           </div>
-          <div class="modal-chips">${(media.genres || []).map((g) => `<span class="chip">${escapeHtml(g.name)}</span>`).join('')}</div>
+          <div class="modal-chips">${(movie.genres || []).map((g) => `<span class="chip">${escapeHtml(g.name)}</span>`).join('')}</div>
         </div>
       </div>
 
@@ -595,24 +538,12 @@ function renderModalContent(modal, media) {
           ${t('modal.trailer')}</button>` : ''}
       </div>
 
-      <p class="modal-overview">${escapeHtml(media.overview || '')}</p>
+      <p class="modal-overview">${escapeHtml(movie.overview || '')}</p>
       ${director ? `<p class="modal-crew">${t('modal.director')}: <b>${escapeHtml(director.name)}</b></p>` : ''}
-      ${creator ? `<p class="modal-crew">${t('modal.show')}: <b>${escapeHtml(creator.name)}</b></p>` : ''}
-
-      ${type === 'tv' && seasons.length ? `
-      <div class="modal-section">
-        <h3>${t('modal.seasons')}</h3>
-        <div class="season-pick">
-          <select class="set-select" id="season-select">
-            ${seasons.map((s) => `<option value="${s.season_number}">${escapeHtml(s.name || `S${s.season_number}`)}</option>`).join('')}
-          </select>
-          <div class="episode-grid" id="episode-grid"><div class="sk sk-line"></div></div>
-        </div>
-      </div>` : ''}
 
       ${cast.length ? `<div class="modal-section"><h3>${t('modal.cast')}</h3><div class="cast-row">${cast.map((c) => `
         <div class="cast-card">
-          ${c.profile_path ? `<img src="${IMG.profile + c.profile_path}" alt="${escapeHtml(c.name)}" loading="lazy">` : `<div class="ph">${escapeHtml((c.name || '?')[0])}</div>`}
+          ${c.profile_path ? `<img src="${IMG.profile + c.profile_path}" alt="${escapeHtml(c.name)}" loading="lazy">` : `<div class="ph">${escapeHtml(c.name[0] || '?')}</div>`}
           <b>${escapeHtml(c.name)}</b><span>${escapeHtml(c.character || '')}</span>
         </div>`).join('')}</div></div>` : ''}
 
@@ -625,43 +556,23 @@ function renderModalContent(modal, media) {
         <div class="carousel-wrap"><div class="carousel" id="modal-similar"></div></div></div>` : ''}
     </div>`;
 
+  // rating ring animation
   requestAnimationFrame(() => requestAnimationFrame(() => {
     const rr = modal.querySelector('.rr-val');
     if (rr) rr.style.strokeDashoffset = String(C * (1 - score / 100));
   }));
 
-  modal.querySelector('.modal-close').addEventListener('click', closeMediaModal);
-  modal.querySelector('[data-act="play"]').addEventListener('click', () => openPlayer(media, { type }));
+  // actions
+  modal.querySelector('.modal-close').addEventListener('click', closeMovieModal);
+  modal.querySelector('[data-act="play"]').addEventListener('click', () => openPlayer(movie));
   modal.querySelector('[data-act="wl"]').addEventListener('click', (e) => {
-    const added = toggleWatchlist(media);
+    const added = toggleWatchlist(movie);
     e.currentTarget.textContent = added ? '✓ ' + t('modal.watchlist.remove') : '+ ' + t('modal.watchlist.add');
   });
   const tBtn = modal.querySelector('[data-act="trailer"]');
-  if (tBtn) tBtn.addEventListener('click', () => openTrailer(media, trailer.key));
+  if (tBtn) tBtn.addEventListener('click', () => openTrailer(movie, trailer.key));
 
-  // season / episode picker
-  const sel = modal.querySelector('#season-select');
-  if (sel) {
-    const grid = modal.querySelector('#episode-grid');
-    const paint = async (n) => {
-      grid.innerHTML = `<div class="sk sk-line"></div>`;
-      try {
-        const data = await getSeason(media.id, n);
-        grid.innerHTML = '';
-        (data.episodes || []).forEach((ep) => {
-          const b = document.createElement('button');
-          b.className = 'ep-chip';
-          b.innerHTML = `<b>${ep.episode_number}</b><span>${escapeHtml(ep.name || '')}</span>`;
-          b.title = ep.overview || ep.name || '';
-          b.addEventListener('click', () => openPlayer(media, { type: 'tv', season: n, episode: ep.episode_number }));
-          grid.appendChild(b);
-        });
-      } catch { grid.innerHTML = `<span class="muted">${t('modal.nowhere')}</span>`; }
-    };
-    sel.addEventListener('change', () => paint(Number(sel.value)));
-    paint(Number(sel.value));
-  }
-
+  // similar row
   const simRow = modal.querySelector('#modal-similar');
   if (simRow) {
     similar.forEach((m) => simRow.appendChild(movieCard(m)));
@@ -670,12 +581,13 @@ function renderModalContent(modal, media) {
   modal.scrollTop = 0;
 }
 
-async function loadProviders(type, id) {
+async function loadProviders(id) {
   const panel = document.getElementById('providers-panel');
   if (!panel) return;
   try {
-    const data = await getProviders(type, id);
+    const data = await getProviders(id);
     const regions = data.results || {};
+    // Prefer Indonesia, fall back to US then first available region
     const regionKey = regions.ID ? 'ID' : regions.US ? 'US' : Object.keys(regions)[0];
     if (!regionKey) { panel.innerHTML = `<p class="muted" style="font-size:.9rem">${t('modal.nowhere')}</p>`; return; }
     const r = regions[regionKey];
@@ -694,8 +606,8 @@ async function loadProviders(type, id) {
   }
 }
 
-export function closeMediaModal() {
-  const modal = document.getElementById('media-modal');
+export function closeMovieModal() {
+  const modal = document.getElementById('movie-modal');
   const backdrop = document.getElementById('modal-backdrop');
   modal.classList.remove('open');
   backdrop.classList.remove('open');
@@ -703,18 +615,18 @@ export function closeMediaModal() {
   if (lastFocused) { lastFocused.focus?.(); lastFocused = null; }
 }
 
-document.getElementById('modal-backdrop')?.addEventListener('click', closeMediaModal);
+// Backdrop click closes the detail modal
+document.getElementById('modal-backdrop')?.addEventListener('click', closeMovieModal);
 
+// Focus trap inside movie modal
 document.addEventListener('keydown', (e) => {
-  const modal = document.getElementById('media-modal');
-  if (!modal?.classList.contains('open')) return;
-  if (e.key === 'Escape') { closeMediaModal(); return; }
+  const modal = document.getElementById('movie-modal');
+  if (!modal.classList.contains('open')) return;
+  if (e.key === 'Escape') { closeMovieModal(); return; }
   if (e.key !== 'Tab') return;
-  const focusables = modal.querySelectorAll('button, a[href], input, select, [tabindex]:not([tabindex="-1"])');
+  const focusables = modal.querySelectorAll('button, a[href], input, [tabindex]:not([tabindex="-1"])');
   if (!focusables.length) return;
   const first = focusables[0], last = focusables[focusables.length - 1];
   if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
   else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
 });
-
-export { CERTIFICATIONS };

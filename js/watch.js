@@ -57,7 +57,7 @@ function paintChrome() {
   document.title = `${name} — StreamVault`;
   el('watch-title').textContent = name;
   el('watch-sub').textContent = state.type === 'tv'
-    ? t('watch.episode', { s: state.season, e: state.episode })
+    ? t('watch.episode').replace('{s}', state.season).replace('{e}', state.episode)
     : (state.id ? `TMDB #${state.id}` : '');
   el('watch-boot-text').textContent = t('watch.loading');
   el('watch-back').textContent = t('watch.back');
